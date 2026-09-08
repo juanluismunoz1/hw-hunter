@@ -1,5 +1,5 @@
 // Hot Wheels Hunter Chile — Service Worker (offline-first)
-const CACHE = 'hwh-v1';
+const CACHE = 'hwh-v2';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (e) => {

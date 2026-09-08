@@ -390,6 +390,7 @@ body.light .scan-hero{background:linear-gradient(135deg,#fff1e6,#eef2fa)}
   <input class="search-input" id="dbSearch" placeholder="Buscar por nombre, marca, Toy #…" autocomplete="off">
   <div class="chips" id="dbYearChips" style="margin-top:10px"></div>
   <div class="chips" id="dbTypeChips"></div>
+  <button class="btn btn-primary btn-block" id="btnAddModel" style="margin-bottom:12px">➕ Agregar modelo a la enciclopedia</button>
   <p class="db-count" id="dbCount"></p>
   <div class="db-grid" id="dbGrid"></div>
 </section>
@@ -931,6 +932,103 @@ function openModal(html) { $("#modalContent").innerHTML = `<button class="modal-
 function closeModal() { $("#modalOverlay").classList.remove("open"); }
 $("#modalOverlay").addEventListener("click", (e) => { if (e.target.id === "modalOverlay") closeModal(); });
 
+/* ---------- Modelos personalizados (localStorage) ---------- */
+let customDB = store.get("hwh_customdb", []);
+customDB.forEach((m) => {
+  if (!m.signs) m.signs = signsFor(m.type);
+  if (!m.factor) m.factor = Math.round(m.min / m.retail) + "x–" + Math.round(m.max / m.retail) + "x";
+});
+function allModels() { return DB.concat(customDB); }
+
+function fillModelLists() {
+  const ms = allModels();
+  const opts = ms.map((m) => `<option value="${m.id}">${m.year} · ${esc(m.name)} (${TYPE_LABEL[m.type]})${m.custom ? " ✍️" : ""}</option>`).join("");
+  const cs = $("#compareSelect"); if (cs) cs.innerHTML = opts;
+  const cm = $("#calcModel"); if (cm) cm.innerHTML = `<option value="">— Selecciona un modelo —</option>` + ms.map((m) => `<option value="${m.id}">${TYPE_LABEL[m.type]} ${esc(m.name)} (${m.year})</option>`).join("");
+  const dl = $("#hModelList"); if (dl) dl.innerHTML = ms.map((m) => `<option value="${esc(m.name)}">`).join("");
+}
+
+function openAddModel() {
+  openModal(`
+    <h3>➕ Agregar modelo a la enciclopedia</h3>
+    <p class="muted small">Para modelos básicos buscados, variantes o cualquier auto que quieras trackear. Se guarda solo en tu dispositivo.</p>
+    <div class="form-grid" style="margin-top:12px">
+      <div class="field"><label>Nombre *</label><input id="amName" placeholder="Ej: '95 Honda Civic EG"></div>
+      <div class="field"><label>Marca</label><input id="amBrand" placeholder="Honda"></div>
+      <div class="field"><label>Año *</label><input type="number" id="amYear" inputmode="numeric" value="2026"></div>
+      <div class="field"><label>Tipo</label><select id="amType">
+        <option value="REG">⚪ Regular / básico buscado</option>
+        <option value="TH">🔥 TH</option>
+        <option value="STH">💎 STH</option>
+        <option value="ZAMAC">🩶 Zamac</option>
+        <option value="CHASE">⭐ Chase Premium</option>
+        <option value="REDED">🔴 Red Edition</option>
+      </select></div>
+      <div class="field"><label>Serie</label><input id="amSeries" value="Mainline"></div>
+      <div class="field"><label>Case</label><input id="amKase" placeholder="—" maxlength="2"></div>
+      <div class="field"><label>Color</label><input id="amColor" placeholder="Rojo"></div>
+      <div class="field"><label>Color para la ilustración</label><input type="color" id="amHex" value="#c62828" style="height:48px;padding:4px"></div>
+      <div class="field"><label>Toy #</label><input id="amToy" placeholder="Ej: JBC21"></div>
+      <div class="field"><label>UPC (código de barras)</label><input type="number" id="amUpc" inputmode="numeric" placeholder="194735…"></div>
+      <div class="field"><label>Precio retail CLP *</label><input type="number" id="amRetail" inputmode="numeric" placeholder="4990"></div>
+      <div class="field"><label>Reventa mín CLP *</label><input type="number" id="amMin" inputmode="numeric" placeholder="8000"></div>
+      <div class="field"><label>Reventa máx CLP</label><input type="number" id="amMax" inputmode="numeric" placeholder="15000"></div>
+      <div class="field"><label>Reventa USD mín</label><input type="number" id="amUsdMin" inputmode="numeric" placeholder="0"></div>
+      <div class="field"><label>Reventa USD máx</label><input type="number" id="amUsdMax" inputmode="numeric" placeholder="0"></div>
+      <div class="field"><label>Dificultad (1–5)</label><input type="number" id="amDiff" inputmode="numeric" min="1" max="5" value="2"></div>
+    </div>
+    <div class="field"><label>Notas</label><textarea id="amNotes" rows="2" placeholder="Por qué es buscado, dónde lo has visto…"></textarea></div>
+    <button class="btn btn-primary btn-block" onclick="saveCustomModel()">💾 Guardar modelo</button>`);
+}
+function saveCustomModel() {
+  const name = $("#amName").value.trim();
+  const year = +$("#amYear").value;
+  const retail = +$("#amRetail").value, min = +$("#amMin").value;
+  if (!name || !year || !(retail > 0) || !(min > 0)) { toast("Completa: nombre, año, retail y reventa mínima"); return; }
+  const m = {
+    id: "custom-" + uid(), name,
+    brand: $("#amBrand").value.trim() || "—",
+    year,
+    series: $("#amSeries").value.trim() || "Mainline",
+    type: $("#amType").value,
+    color: $("#amColor").value.trim() || "—",
+    hex: $("#amHex").value,
+    toy: $("#amToy").value.trim() || "—",
+    kase: $("#amKase").value.trim() || "—",
+    upc: $("#amUpc").value.replace(/\D/g, "") || ("C" + Date.now().toString().slice(-10)),
+    retail, min,
+    max: +$("#amMax").value || min,
+    usd: [+$("#amUsdMin").value || 0, +$("#amUsdMax").value || 0],
+    diff: Math.min(5, Math.max(1, +$("#amDiff").value || 2)),
+    notes: $("#amNotes").value.trim(),
+    custom: true
+  };
+  m.signs = signsFor(m.type);
+  m.factor = Math.round(m.min / m.retail) + "x–" + Math.round(m.max / m.retail) + "x";
+  customDB.push(m);
+  store.set("hwh_customdb", customDB);
+  closeModal();
+  refreshModelUI();
+  toast("✅ Modelo agregado a tu enciclopedia");
+}
+function delCustomModel(id) {
+  if (!confirm("¿Eliminar este modelo de tu enciclopedia?")) return;
+  customDB = customDB.filter((m) => m.id !== id);
+  store.set("hwh_customdb", customDB);
+  checklist = checklist.filter((c) => c.id !== id);
+  store.set("hwh_checklist", checklist);
+  closeModal();
+  refreshModelUI();
+  renderChecklist();
+  toast("🗑 Modelo eliminado");
+}
+function refreshModelUI() {
+  renderYearChips();
+  fillModelLists();
+  renderCompareRef();
+  renderDB();
+}
+
 /* ================================================================
    SECCIÓN 1: SCANNER
 ================================================================ */
@@ -984,7 +1082,7 @@ $("#btnCamStop").addEventListener("click", stopCamera);
 
 function lookupCode(code) {
   const clean = String(code).replace(/\D/g, "");
-  const hit = DB.find((m) => m.upc === clean);
+  const hit = allModels().find((m) => m.upc === clean);
   $("#scanStatus").textContent = "Código leído: " + clean;
   if (hit) renderResult(hit);
   else renderNotFound(clean);
@@ -994,7 +1092,7 @@ function lookupCode(code) {
 $("#scanManual").addEventListener("input", (e) => {
   const q = e.target.value.trim().toLowerCase();
   if (q.length < 3) return;
-  const hit = DB.find((m) =>
+  const hit = allModels().find((m) =>
     m.upc === q.replace(/\D/g, "") && q.replace(/\D/g, "").length > 6 ||
     m.toy.toLowerCase() === q ||
     m.name.toLowerCase().includes(q)
@@ -1043,9 +1141,10 @@ function renderNotFound(code) {
 
 /* --- Comparación visual por foto --- */
 const compareSel = $("#compareSelect");
-compareSel.innerHTML = DB.map((m) => `<option value="${m.id}">${m.year} · ${esc(m.name)} (${TYPE_LABEL[m.type]})</option>`).join("");
+fillModelLists();
 function renderCompareRef() {
-  const m = DB.find((x) => x.id === compareSel.value) || DB[0];
+  const ms = allModels();
+  const m = ms.find((x) => x.id === compareSel.value) || ms[0];
   $("#compareRef").innerHTML = `${carSVG(m.hex, m.type, "cmp" + m.id)}<span>Referencia ${TYPE_LABEL[m.type]}</span>`;
   $("#compareSigns").innerHTML = `<h4>✅ Verifica en tu auto:</h4><ul class="sign-list">${m.signs.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>`;
 }
@@ -1104,17 +1203,22 @@ function wizAnswer(a) { wizAns.push(a); wizStep++; renderWizard(); }
    SECCIÓN 2: BASE DE DATOS
 ================================================================ */
 const dbFilter = { q: "", year: "all", type: "all" };
-const years = [...new Set(DB.map((m) => m.year))].sort((a, b) => b - a);
-$("#dbYearChips").innerHTML = `<button class="chip active" data-y="all">Todos</button>` + years.map((y) => `<button class="chip" data-y="${y}">${y}</button>`).join("");
+function renderYearChips() {
+  const ys = [...new Set(allModels().map((m) => m.year))].sort((a, b) => b - a);
+  $("#dbYearChips").innerHTML = `<button class="chip ${dbFilter.year === "all" ? "active" : ""}" data-y="all">Todos</button>` + ys.map((y) => `<button class="chip ${String(dbFilter.year) === String(y) ? "active" : ""}" data-y="${y}">${y}</button>`).join("");
+}
+renderYearChips();
 $("#dbTypeChips").innerHTML = `<button class="chip active" data-t="all">Todos</button>
   <button class="chip" data-t="TH">🔥 TH</button><button class="chip" data-t="STH">💎 STH</button>
+  <button class="chip" data-t="REG">⚪ Regular</button>
   <button class="chip" data-t="ZAMAC">🩶 Zamac</button><button class="chip" data-t="CHASE">⭐ Chase</button><button class="chip" data-t="REDED">🔴 Red Ed.</button>`;
+$("#btnAddModel").addEventListener("click", openAddModel);
 $("#dbYearChips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (!b) return; dbFilter.year = b.dataset.y; $$("#dbYearChips .chip").forEach((c) => c.classList.toggle("active", c === b)); renderDB(); });
 $("#dbTypeChips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (!b) return; dbFilter.type = b.dataset.t; $$("#dbTypeChips .chip").forEach((c) => c.classList.toggle("active", c === b)); renderDB(); });
 $("#dbSearch").addEventListener("input", (e) => { dbFilter.q = e.target.value.trim().toLowerCase(); renderDB(); });
 
 function renderDB() {
-  const list = DB.filter((m) =>
+  const list = allModels().filter((m) =>
     (dbFilter.year === "all" || m.year === Number(dbFilter.year)) &&
     (dbFilter.type === "all" || m.type === dbFilter.type) &&
     (!dbFilter.q || (m.name + " " + m.brand + " " + m.toy + " " + m.series).toLowerCase().includes(dbFilter.q))
@@ -1124,7 +1228,7 @@ function renderDB() {
     <div class="db-card" onclick="openModel('${m.id}')">
       <div class="db-thumb">${carSVG(m.hex, m.type, "db" + m.id)}</div>
       <div class="db-info">
-        <span class="badge b-${m.type === "REDED" ? "REDED" : m.type === "ID" ? "CHASE" : m.type}">${TYPE_LABEL[m.type]}</span>
+        <span class="badge b-${m.type === "REDED" ? "REDED" : m.type === "ID" ? "CHASE" : m.type}">${TYPE_LABEL[m.type]}</span>${m.custom ? ` <span class="badge b-REG">✍️ Tuyo</span>` : ""}
         <h4>${esc(m.name)}</h4>
         <div class="meta">${m.year} · Case ${m.kase}</div>
         <div class="price">${fmtCLP(m.min)} – ${fmtCLP(m.max)}</div>
@@ -1133,7 +1237,7 @@ function renderDB() {
 }
 
 function openModel(id) {
-  const m = DB.find((x) => x.id === id);
+  const m = allModels().find((x) => x.id === id);
   if (!m) return;
   const inList = checklist.some((c) => c.id === id);
   openModal(`
@@ -1154,10 +1258,11 @@ function openModel(id) {
     <h4 style="margin:12px 0 2px">Señales de identificación</h4>
     <ul class="sign-list">${m.signs.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
     ${m.notes ? `<p class="small" style="margin-top:8px">📝 ${esc(m.notes)}</p>` : ""}
-    <p class="kbd-note">Ilustración referencial. Verifica precios reales en MercadoLibre antes de comprar.</p>
+    ${m.custom ? `<p class="small" style="margin-top:6px">✍️ Modelo agregado por ti.</p>` : `<p class="kbd-note">Ilustración referencial. Verifica precios reales en MercadoLibre antes de comprar.</p>`}
     <div class="btn-row" style="margin-top:14px">
       <button class="btn ${inList ? "btn-danger" : "btn-blue"}" onclick="toggleChecklist('${m.id}');closeModal()">${inList ? "✕ Quitar de mi checklist" : "🎯 Lo estoy buscando"}</button>
       <button class="btn btn-good" onclick="closeModal();quickLog('${m.id}')">💾 Registrar compra</button>
+      ${m.custom ? `<button class="btn btn-danger" onclick="delCustomModel('${m.id}')">🗑 Eliminar modelo</button>` : ""}
     </div>`);
 }
 
@@ -1175,9 +1280,9 @@ $("#vsExample").innerHTML = ["REG", "TH", "STH"].map((t) => `
 /* ================================================================
    SECCIÓN 4: CALCULADORA
 ================================================================ */
-$("#calcModel").innerHTML += DB.map((m) => `<option value="${m.id}">${TYPE_LABEL[m.type]} ${esc(m.name)} (${m.year})</option>`).join("");
+/* opciones de modelos: las llena fillModelLists() */
 $("#calcModel").addEventListener("change", (e) => {
-  const m = DB.find((x) => x.id === e.target.value);
+  const m = allModels().find((x) => x.id === e.target.value);
   if (!m) return;
   $("#calcBuy").value = m.retail;
   $("#calcSell").value = Math.round((m.min + m.max) / 2);
@@ -1270,7 +1375,7 @@ function renderChecklist() {
   const el = $("#checkList");
   if (!checklist.length) { el.innerHTML = `<p class="muted small">No estás buscando nada aún. Agrégalos desde la 📚 Enciclopedia.</p>`; return; }
   el.innerHTML = checklist.map((c) => {
-    const m = DB.find((x) => x.id === c.id);
+    const m = allModels().find((x) => x.id === c.id);
     if (!m) return "";
     return `<div class="check-item ${c.done ? "done" : ""}" onclick="toggleDone('${c.id}')">
       <div class="cb">${c.done ? "✓" : ""}</div>
@@ -1302,7 +1407,7 @@ let hunts = store.get("hwh_hunts", []);
 let huntFilter = "todos";
 
 $("#hPlace").innerHTML = STORES.map((s) => `<option>${esc(s.name)}</option>`).join("") + `<option>Otro</option>`;
-$("#hModelList").innerHTML = DB.map((m) => `<option value="${esc(m.name)}">`).join("");
+/* datalist: lo llena fillModelLists() */
 $("#hDate").value = new Date().toISOString().slice(0, 10);
 
 let hPhotoData = null;
@@ -1340,7 +1445,7 @@ $("#btnAddHunt").addEventListener("click", () => {
 });
 
 function quickLog(modelId) {
-  const m = DB.find((x) => x.id === modelId);
+  const m = allModels().find((x) => x.id === modelId);
   if (!m) return;
   showSection("sec-historial");
   $("#hModel").value = m.name;
