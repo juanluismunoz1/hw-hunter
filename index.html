@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ff6600">
+<meta name="description" content="Hot Wheels Hunter Chile — identifica, caza y revende Treasure Hunts y Super Treasure Hunts en Chile.">
+<title>Hot Wheels Hunter Chile</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+/* ============ RESET & TOKENS ============ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0e13; --bg2:#111722; --card:#161e2b; --card2:#1d2737; --card3:#232f44;
+  --text:#eef2f7; --muted:#8b98ab; --faint:#5c6a7e;
+  --accent:#ff6600; --accent-soft:rgba(255,102,0,.14);
+  --accent2:#0066cc; --accent2-soft:rgba(0,102,204,.16); --accent2-lt:#4d9fff;
+  --good:#2ecc71; --warn:#f1c40f; --bad:#e74c3c;
+  --border:#26324a; --shadow:0 8px 24px rgba(0,0,0,.35);
+  --radius:16px; --tabbar-h:64px;
+}
+body.light{
+  --bg:#f2f4f9; --bg2:#e8ecf4; --card:#ffffff; --card2:#f4f6fb; --card3:#eaeef6;
+  --text:#17202e; --muted:#5b6a80; --faint:#8b98ab;
+  --accent-soft:rgba(255,102,0,.10); --accent2-soft:rgba(0,102,204,.10);
+  --border:#d8dfec; --shadow:0 8px 22px rgba(23,32,46,.10);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; -webkit-tap-highlight-color:transparent;
+  transition:background .25s,color .25s;
+}
+img{max-width:100%}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--text)}
+h1,h2,h3,h4{line-height:1.2}
+a{color:var(--accent2-lt)}
+
+/* ============ HEADER ============ */
+header{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 14px;
+  background:linear-gradient(120deg,#0b0e13 0%,#131a28 55%,#1a1208 100%);
+  border-bottom:2px solid var(--accent);
+}
+body.light header{background:linear-gradient(120deg,#ffffff,#eef2fa 55%,#fff1e6)}
+.logo{font-size:19px;font-weight:900;letter-spacing:.3px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.logo .flame{filter:drop-shadow(0 0 8px rgba(255,102,0,.8))}
+.logo span{color:var(--accent)}
+.logo small{display:block;font-size:9px;font-weight:700;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase}
+.header-actions{display:flex;gap:8px;align-items:center}
+.icon-btn{
+  width:42px;height:42px;border-radius:12px;font-size:19px;
+  background:var(--card2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;transition:transform .15s;
+}
+.icon-btn:active{transform:scale(.92)}
+
+/* ============ LAYOUT / TABBAR ============ */
+main{max-width:1060px;margin:0 auto;padding:16px 14px calc(var(--tabbar-h) + 34px)}
+.section{display:none;animation:fadeUp .28s ease}
+.section.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  height:calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:rgba(13,17,24,.92);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(7,1fr);
+}
+body.light .tabbar{background:rgba(255,255,255,.94)}
+.tabbar button{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:9.5px;font-weight:700;color:var(--muted);letter-spacing:.2px;
+  border-top:3px solid transparent;transition:color .15s;
+}
+.tabbar button .ti{font-size:20px;line-height:1}
+.tabbar button.active{color:var(--accent);border-top-color:var(--accent)}
+.tabbar button.active .ti{transform:translateY(-1px) scale(1.12);filter:drop-shadow(0 0 6px rgba(255,102,0,.7))}
+@media(min-width:820px){
+  .tabbar{max-width:860px;left:50%;transform:translateX(-50%);bottom:14px;border-radius:22px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+  main{padding-bottom:120px}
+}
+
+/* ============ GENERIC COMPONENTS ============ */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h2{font-size:18px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card h3{font-size:15px;margin-bottom:8px}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.section-title{font-size:22px;font-weight:900;margin:6px 0 2px;display:flex;align-items:center;gap:9px}
+.section-sub{color:var(--muted);font-size:13.5px;margin-bottom:16px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 20px;border-radius:14px;font-size:15px;font-weight:800;
+  transition:transform .12s,filter .15s;min-height:48px;
+}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,#ff7a1a,#ff5500);color:#fff;box-shadow:0 4px 16px rgba(255,102,0,.35)}
+.btn-blue{background:linear-gradient(135deg,#0a7cff,#0057b8);color:#fff;box-shadow:0 4px 16px rgba(0,102,204,.35)}
+.btn-ghost{background:var(--card2);border:1px solid var(--border);color:var(--text)}
+.btn-danger{background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.4);color:#ff7b6e}
+.btn-good{background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.4);color:#4be08a}
+.btn-block{width:100%}
+.btn-sm{padding:8px 13px;min-height:38px;font-size:13px;border-radius:10px}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn-row .btn{flex:1;min-width:140px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.4px;white-space:nowrap}
+.b-TH{background:linear-gradient(135deg,#ff9a3d,#ff5500);color:#fff;box-shadow:0 0 12px rgba(255,102,0,.5)}
+.b-STH{background:linear-gradient(135deg,#7b2ff7,#2979ff 45%,#00c853);color:#fff;box-shadow:0 0 14px rgba(123,47,247,.55)}
+.b-REG{background:var(--card3);color:var(--muted);border:1px solid var(--border)}
+.b-ZAMAC{background:linear-gradient(135deg,#9aa7b8,#5c6a7e);color:#fff}
+.b-CHASE{background:linear-gradient(135deg,#f1c40f,#b8860b);color:#1a1a1a}
+.b-REDED{background:linear-gradient(135deg,#e74c3c,#8e1e12);color:#fff}
+
+/* Forms */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12.5px;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px}
+.field input,.field select,.field textarea{
+  width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);
+  background:var(--bg2);outline:none;transition:border .15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media(max-width:520px){.form-grid{grid-template-columns:1fr}}
+
+/* Chips / filters */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;padding:9px 16px;border-radius:999px;font-size:13px;font-weight:800;
+  background:var(--card2);border:1.5px solid var(--border);color:var(--muted);transition:all .15s;
+}
+.chip.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.search-input{
+  width:100%;padding:14px 16px 14px 44px;border-radius:14px;border:1.5px solid var(--border);
+  background:var(--bg2) url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%238b98ab" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>') no-repeat 14px center;
+  outline:none;font-size:15px;
+}
+.search-input:focus{border-color:var(--accent)}
+
+/* ============ SCANNER ============ */
+.scan-hero{
+  border-radius:var(--radius);padding:20px 16px;margin-bottom:14px;text-align:center;
+  background:linear-gradient(135deg,#1a1208,#131a28);border:1px solid rgba(255,102,0,.35);
+}
+body.light .scan-hero{background:linear-gradient(135deg,#fff1e6,#eef2fa)}
+.scan-hero h2{font-size:20px;margin-bottom:6px}
+.camera-box{
+  position:relative;border-radius:var(--radius);overflow:hidden;background:#000;
+  aspect-ratio:4/3;display:none;margin-bottom:12px;border:2px solid var(--accent);
+}
+.camera-box.on{display:block}
+.camera-box video{width:100%;height:100%;object-fit:cover}
+.scan-line{
+  position:absolute;left:8%;right:8%;height:3px;background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  box-shadow:0 0 14px var(--accent);animation:scanmove 1.8s ease-in-out infinite;top:15%;
+}
+@keyframes scanmove{0%,100%{top:15%}50%{top:82%}}
+.scan-corners{position:absolute;inset:12%;border:3px solid rgba(255,102,0,.65);border-radius:14px;pointer-events:none}
+.scan-status{font-size:13px;color:var(--muted);margin:8px 0;min-height:18px}
+.result-card{border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border);background:var(--card);margin-top:14px}
+.result-banner{padding:14px 16px;font-size:19px;font-weight:900;text-align:center;letter-spacing:.5px}
+.result-banner.TH{background:linear-gradient(135deg,#ff9a3d,#ff5500);color:#fff}
+.result-banner.STH{background:linear-gradient(135deg,#7b2ff7,#2979ff 45%,#00c853);color:#fff}
+.result-banner.REG{background:var(--card3);color:var(--muted)}
+.result-banner.NF{background:rgba(231,76,60,.2);color:#ff7b6e}
+.result-body{padding:16px}
+.result-car{display:flex;justify-content:center;padding:6px 0 12px}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.price-cell{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center}
+.price-cell b{display:block;font-size:15px;margin-top:3px}
+.price-cell span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:800}
+.price-cell.gain b{color:var(--good)}
+.sign-list{list-style:none;margin:8px 0}
+.sign-list li{padding:7px 0 7px 26px;position:relative;font-size:13.5px;border-bottom:1px dashed var(--border)}
+.sign-list li::before{content:"🔍";position:absolute;left:2px}
+.compare-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.compare-pane{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+.compare-pane img,.compare-pane svg{width:100%;border-radius:8px}
+.compare-pane span{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* ============ DATABASE ============ */
+.db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
+.db-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s}
+.db-card:hover{transform:translateY(-3px);border-color:var(--accent)}
+.db-thumb{padding:14px 10px 6px;background:radial-gradient(circle at 50% 65%,var(--card3),var(--card2))}
+.db-info{padding:10px 12px 13px}
+.db-info h4{font-size:13.5px;margin:6px 0 3px;line-height:1.3}
+.db-info .meta{font-size:11px;color:var(--muted)}
+.db-info .price{font-size:13px;font-weight:900;color:var(--good);margin-top:5px}
+.db-count{font-size:12.5px;color:var(--muted);margin:10px 2px}
+
+/* ============ MODAL ============ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(4,7,12,.78);z-index:100;
+  display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  width:100%;max-width:640px;max-height:88vh;overflow-y:auto;
+  background:var(--card);border:1px solid var(--border);border-radius:22px 22px 0 0;
+  padding:20px 18px calc(20px + env(safe-area-inset-bottom));animation:slideUp .3s ease;
+}
+@media(min-width:700px){.modal-overlay{align-items:center}.modal{border-radius:22px;padding-bottom:20px}}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+.modal-close{position:sticky;top:0;float:right;width:38px;height:38px;border-radius:10px;background:var(--card2);font-size:17px;z-index:2}
+
+/* ============ WIZARD ============ */
+.wiz-q{font-size:19px;font-weight:900;margin:18px 0 8px;text-align:center;min-height:52px}
+.wiz-hint{text-align:center;color:var(--muted);font-size:13px;margin-bottom:20px}
+.wiz-dots{display:flex;justify-content:center;gap:8px;margin-bottom:14px}
+.wiz-dots i{width:10px;height:10px;border-radius:50%;background:var(--card3)}
+.wiz-dots i.on{background:var(--accent)}
+
+/* ============ GUIA ============ */
+.guide-block{margin-bottom:22px}
+.blister-demo{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.blister{
+  width:150px;border-radius:10px;overflow:hidden;position:relative;
+  background:linear-gradient(180deg,#c8102e 0 22%,#f5f0e6 22% 100%);
+  border:2px solid #999;box-shadow:var(--shadow);color:#222;
+}
+.blister .b-head{color:#fff;text-align:center;font-weight:900;font-size:11px;padding:7px 4px 5px;letter-spacing:1px;font-style:italic}
+.blister .b-bubble{margin:14px 14px 8px;background:rgba(255,255,255,.75);border:2px solid #bbb;border-radius:8px;height:86px;display:flex;align-items:center;justify-content:center;position:relative}
+.blister .b-foot{text-align:center;font-size:9px;font-weight:800;padding:6px 4px 10px;color:#444}
+.blister .flame-mark{position:absolute;font-size:20px;animation:pulse 1.4s infinite}
+.blister .f1{right:16px;bottom:104px}
+.blister .f2{left:50%;top:96px;transform:translateX(-50%)}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:.75}}
+.blister .f2{animation-name:pulse2}
+@keyframes pulse2{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.25)}}
+.blister-label{width:150px;font-size:12px;color:var(--muted);text-align:center}
+.vs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+@media(max-width:520px){.vs-grid{grid-template-columns:1fr}}
+.vs-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;padding:12px;text-align:center}
+.vs-card.hl-th{border-color:var(--accent);box-shadow:0 0 14px rgba(255,102,0,.25)}
+.vs-card.hl-sth{border-color:#7b2ff7;box-shadow:0 0 14px rgba(123,47,247,.3)}
+.vs-card ul{list-style:none;text-align:left;margin-top:8px}
+.vs-card li{font-size:12px;padding:4px 0 4px 18px;position:relative}
+.vs-card li::before{content:"•";position:absolute;left:6px;color:var(--accent)}
+.warn-card{background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.35);border-radius:14px;padding:14px;margin-bottom:10px}
+.warn-card h4{color:#ff7b6e;font-size:14px;margin-bottom:4px}
+.tip-card{background:rgba(0,102,204,.08);border:1px solid rgba(0,102,204,.35);border-radius:14px;padding:14px;margin-bottom:10px}
+.tip-card h4{color:var(--accent2-lt);font-size:14px;margin-bottom:4px}
+.basecode{display:inline-block;background:#1a1a1a;color:#ffe66d;font-family:"Courier New",monospace;font-weight:900;padding:4px 10px;border-radius:6px;letter-spacing:2px;border:1px dashed #666;font-size:15px}
+.edu-card h3{margin-bottom:8px;color:var(--accent)}
+.edu-card p{font-size:14px;line-height:1.65;color:var(--text);margin-bottom:10px}
+.edu-card ul,.edu-card ol{margin:6px 0 12px 20px;font-size:14px;line-height:1.7}
+
+/* ============ CALCULADORA ============ */
+.calc-result{border-radius:var(--radius);padding:18px;text-align:center;margin-top:6px}
+.calc-result .net{font-size:34px;font-weight:900;margin:4px 0}
+.calc-result .roi{font-size:16px;font-weight:800;color:var(--muted)}
+.verdict{display:inline-block;margin-top:12px;padding:10px 24px;border-radius:999px;font-size:17px;font-weight:900;letter-spacing:1px}
+.v-buy{background:rgba(46,204,113,.18);color:#4be08a;border:2px solid var(--good);animation:glowG 1.6s infinite}
+.v-wait{background:rgba(241,196,15,.15);color:#ffe66d;border:2px solid var(--warn)}
+.v-nope{background:rgba(231,76,60,.14);color:#ff7b6e;border:2px solid var(--bad)}
+@keyframes glowG{0%,100%{box-shadow:0 0 6px rgba(46,204,113,.4)}50%{box-shadow:0 0 22px rgba(46,204,113,.8)}}
+.margin-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+.margin-table th,.margin-table td{padding:11px 10px;border-bottom:1px solid var(--border);text-align:left}
+.margin-table th{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted)}
+.margin-table tr td:first-child{font-weight:800}
+
+/* ============ MAPA ============ */
+.store-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:11px;border-left:4px solid var(--accent2)}
+.store-card h4{font-size:15.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.store-meta{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0;font-size:12px;color:var(--muted)}
+.store-meta b{color:var(--text)}
+.stars{color:var(--warn);letter-spacing:1px;font-size:12px}
+.cat-title{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;color:var(--faint);margin:18px 0 10px}
+
+/* ============ ALERTAS ============ */
+.cal-item{display:flex;gap:13px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:13px;margin-bottom:9px;background:var(--card)}
+.cal-date{flex:0 0 62px;text-align:center;background:var(--accent2-soft);border:1px solid rgba(0,102,204,.35);border-radius:11px;padding:8px 4px}
+.cal-date b{display:block;font-size:17px;color:var(--accent2-lt)}
+.cal-date span{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase}
+.alert-item{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:13px;margin-bottom:9px;background:var(--card)}
+.alert-item .txt{flex:1;font-size:13.5px}
+.check-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--border);border-radius:13px;margin-bottom:9px;background:var(--card);cursor:pointer}
+.check-item .cb{width:26px;height:26px;border-radius:8px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 26px}
+.check-item.done .cb{background:var(--good);border-color:var(--good);color:#0b0e13}
+.check-item.done .nm{text-decoration:line-through;color:var(--muted)}
+.check-item svg{width:58px;flex:0 0 58px}
+
+/* ============ HISTORIAL ============ */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+@media(max-width:520px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:13px 12px;text-align:center}
+.stat b{display:block;font-size:19px;margin-bottom:2px}
+.stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:800}
+.stat.hl b{color:var(--good)}
+.hunt-item{display:flex;gap:12px;padding:12px;border:1px solid var(--border);border-radius:14px;margin-bottom:10px;background:var(--card);align-items:center}
+.hunt-item .h-img{width:74px;height:74px;border-radius:11px;background:var(--bg2);object-fit:cover;flex:0 0 74px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hunt-item .h-body{flex:1;min-width:0}
+.hunt-item h5{font-size:14px;margin-bottom:3px}
+.hunt-item .h-meta{font-size:11.5px;color:var(--muted)}
+.hunt-item .h-money{font-size:13px;font-weight:800;margin-top:4px}
+.pill{font-size:10px;font-weight:900;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.5px}
+.p-coleccion{background:var(--accent2-soft);color:var(--accent2-lt)}
+.p-venta{background:rgba(241,196,15,.15);color:#ffe66d}
+.p-vendido{background:rgba(46,204,113,.15);color:#4be08a}
+.h-actions{display:flex;flex-direction:column;gap:6px}
+.empty-state{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty-state .big{font-size:46px;margin-bottom:10px}
+
+/* ============ TOAST ============ */
+#toast{
+  position:fixed;left:50%;bottom:calc(var(--tabbar-h) + 20px);transform:translateX(-50%) translateY(20px);
+  background:var(--card3);border:1px solid var(--accent);color:var(--text);
+  padding:13px 22px;border-radius:999px;font-size:14px;font-weight:800;z-index:200;
+  opacity:0;pointer-events:none;transition:all .3s;box-shadow:var(--shadow);max-width:90vw;text-align:center;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.kbd-note{font-size:11.5px;color:var(--faint);margin-top:8px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="flame">🔥</span><div>Hot Wheels <span>Hunter</span><small>Chile 🇨🇱</small></div></div>
+  <div class="header-actions">
+    <button class="icon-btn" id="btnTheme" title="Cambiar tema">🌙</button>
+  </div>
+</header>
+
+<main>
+<!-- ==================== SECCIÓN 1: SCANNER ==================== -->
+<section id="sec-scanner" class="section active">
+  <div class="scan-hero">
+    <h2>📷 Hunter Scanner</h2>
+    <p class="muted small">Escanea el código de barras del blister o busca por nombre / Toy # para saber al instante si es Regular, TH o STH.</p>
+  </div>
+
+  <div class="card">
+    <div class="camera-box" id="cameraBox">
+      <video id="camVideo" playsinline muted></video>
+      <div class="scan-corners"></div>
+      <div class="scan-line"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnCamStart">📸 Abrir cámara</button>
+      <button class="btn btn-ghost hidden" id="btnCamStop">⏹ Detener</button>
+    </div>
+    <p class="scan-status" id="scanStatus"></p>
+    <p class="kbd-note">Tip: apunta al código de barras de la parte trasera del blister. Requiere HTTPS o localhost.</p>
+  </div>
+
+  <div class="card">
+    <h3>⌨️ Búsqueda manual</h3>
+    <input class="search-input" id="scanManual" placeholder="UPC, Toy # o nombre del auto… ej: Audi Quattro" autocomplete="off">
+  </div>
+
+  <div class="card">
+    <h3>🖼️ Comparación visual por foto</h3>
+    <p class="muted small">Sube una foto del auto que tienes en la mano y compárala con la referencia. Revisa las señales de identificación una a una.</p>
+    <div class="field" style="margin-top:12px">
+      <label>Modelo de referencia</label>
+      <select id="compareSelect"></select>
+    </div>
+    <div class="field">
+      <label>Tu foto</label>
+      <input type="file" id="comparePhoto" accept="image/*" capture="environment">
+    </div>
+    <div class="compare-wrap hidden" id="compareWrap">
+      <div class="compare-pane"><img id="compareImg" alt="Tu foto"><span>Tu auto</span></div>
+      <div class="compare-pane" id="compareRef"></div>
+    </div>
+    <div id="compareSigns" style="margin-top:12px"></div>
+  </div>
+
+  <button class="btn btn-blue btn-block" id="btnWizard">🧙 ¿Es TH o STH? — Asistente de 3 preguntas</button>
+
+  <div id="scanResult"></div>
+</section>
+
+<!-- ==================== SECCIÓN 2: DATABASE ==================== -->
+<section id="sec-db" class="section">
+  <h1 class="section-title">📚 Enciclopedia TH / STH</h1>
+  <p class="section-sub">Base de datos de Treasure Hunts, Super Treasure Hunts y variantes de colección. <b>Datos de demostración referenciales — verifica siempre el precio real en MercadoLibre antes de comprar.</b></p>
+
+  <input class="search-input" id="dbSearch" placeholder="Buscar por nombre, marca, Toy #…" autocomplete="off">
+  <div class="chips" id="dbYearChips" style="margin-top:10px"></div>
+  <div class="chips" id="dbTypeChips"></div>
+  <p class="db-count" id="dbCount"></p>
+  <div class="db-grid" id="dbGrid"></div>
+</section>
+
+<!-- ==================== SECCIÓN 3: GUÍA ==================== -->
+<section id="sec-guia" class="section">
+  <h1 class="section-title">🎓 Guía de Identificación Visual</h1>
+  <p class="section-sub">Aprende a distinguir un TH de un STH (y de las trampas) en segundos, sin sacar el auto del gancho.</p>
+
+  <div class="card edu-card guide-block">
+    <h2>1️⃣ ¿Dónde buscar la llama en el blister?</h2>
+    <p>Los TH/STH no dicen "Treasure Hunt" en ninguna parte visible. La señal es una <b>llama oculta</b>:</p>
+    <div class="blister-demo">
+      <div>
+        <div class="blister">
+          <div class="b-head">HOT WHEELS</div>
+          <div class="b-bubble" id="blisterCar1"></div>
+          <div class="b-foot">MAINLINE 2026</div>
+          <span class="flame-mark f1">🔥</span>
+        </div>
+        <p class="blister-label">① Llama impresa <b>detrás del auto</b>, sobre el cartón (se ve por el plástico)</p>
+      </div>
+      <div>
+        <div class="blister">
+          <div class="b-head">HOT WHEELS</div>
+          <div class="b-bubble" id="blisterCar2"></div>
+          <div class="b-foot">MAINLINE 2026</div>
+          <span class="flame-mark f2">🔥</span>
+        </div>
+        <p class="blister-label">② Llama pequeña <b>en la carrocería</b> del auto (costado o techo)</p>
+      </div>
+    </div>
+    <p class="muted small">💡 Revisa el auto por ambos costados y gira el blister: la llama del cartón suele estar justo detrás de la burbuja, parcialmente tapada por el auto.</p>
+  </div>
+
+  <div class="card edu-card guide-block">
+    <h2>2️⃣ TH vs STH: las diferencias clave</h2>
+    <div class="vs-grid">
+      <div class="vs-card">
+        <span class="badge b-REG">⚪ REGULAR</span>
+        <ul>
+          <li>Pintura estándar (esmaltada)</li>
+          <li>Rines de plástico</li>
+          <li>Base de plástico</li>
+          <li>Sin llama 🔥</li>
+          <li>Valor reventa: ≈ retail</li>
+        </ul>
+      </div>
+      <div class="vs-card hl-th">
+        <span class="badge b-TH">🔥 TH</span>
+        <ul>
+          <li>Llama en carrocería o detrás del auto en el blister</li>
+          <li>Color o rines distintos al regular</li>
+          <li>Rines de plástico (normales)</li>
+          <li>Base de plástico</li>
+          <li>≈ 1 por cada 2–3 cajas (cases)</li>
+          <li>Reventa: 3x–6x</li>
+        </ul>
+      </div>
+      <div class="vs-card hl-sth">
+        <span class="badge b-STH">💎 STH</span>
+        <ul>
+          <li><b>Pintura Spectraflame</b> (efecto caramelo, cambia con la luz)</li>
+          <li><b>Rines de goma Real Riders</b></li>
+          <li><b>Base de metal</b> (más pesado)</li>
+          <li>Llama en la carrocería</li>
+          <li>≈ 1 por cada 10–15 cajas</li>
+          <li>Reventa: 5x–20x</li>
+        </ul>
+      </div>
+    </div>
+    <p class="muted small">⚖️ Truco de bolsillo: el STH pesa notoriamente más por su base de metal. Si dudas entre dos del mismo modelo, compara peso y brillo de la pintura a la luz del pasillo.</p>
+  </div>
+
+  <div class="card edu-card guide-block">
+    <h2>3️⃣ Ejemplo lado a lado (mismo casting)</h2>
+    <p class="muted small">Ilustración referencial del mismo auto en sus 3 versiones:</p>
+    <div class="vs-grid" id="vsExample"></div>
+  </div>
+
+  <div class="card edu-card guide-block">
+    <h2>4️⃣ ⚠️ Trampas comunes (NO son TH/STH)</h2>
+    <div class="warn-card">
+      <h4>🩶 ZAMAC</h4>
+      <p class="small">Autos <b>sin pintar</b> (metal crudo brillante). Son exclusivos de Walmart en EE.UU. y en Chile circulan poco. Parecen "especiales", pero son una variante aparte: buen valor de colección, <b>no son STH</b>.</p>
+    </div>
+    <div class="warn-card">
+      <h4>🔴 Red Edition</h4>
+      <p class="small">Versiones rojas exclusivas de Target (EE.UU.). Raras de ver en Chile y con valor, pero <b>no llevan llama</b>: no son TH.</p>
+    </div>
+    <div class="warn-card">
+      <h4>📱 id Chase (Hot Wheels id)</h4>
+      <p class="small">Autos con chip NFC para la app, en caja tipo cofre. Tienen Spectraflame y goma, lo que confunde mucho, pero pertenecen a la línea <b>id</b>, no a los STH de mainline.</p>
+    </div>
+    <div class="warn-card">
+      <h4>⭐ Car Culture / Premium "Chase 0/5"</h4>
+      <p class="small">Versiones chase de series premium (marcadas 0/5 en la tarjeta). Muy valiosas, pero se identifican por el <b>0/5 impreso</b>, no por llama ni Spectraflame.</p>
+    </div>
+    <div class="warn-card">
+      <h4>🏁 "First Edition / New Model"</h4>
+      <p class="small">El sello "New for 20XX" solo indica un casting nuevo. No agrega valor de reventa por sí solo.</p>
+    </div>
+  </div>
+
+  <div class="card edu-card guide-block">
+    <h2>5️⃣ Códigos de base (Base Codes)</h2>
+    <p>En la base del auto hay un código grabado como <span class="basecode">U09A</span>:</p>
+    <ul>
+      <li><b>Letra inicial = año</b> de fabricación: S = 2023, T = 2024, U = 2025, V = 2026 (aprox.).</li>
+      <li><b>Los 2 dígitos = semana</b> de producción (09 = semana 9 del año).</li>
+      <li><b>Letra final</b> = línea/planta.</li>
+    </ul>
+    <p class="muted small">Sirve para saber de qué lote salió un auto: si encontraste un TH del case actual en una tienda, revisa que los demás tengan base codes cercanos → el case se repuso recién y pueden quedar más piezas del mismo lote.</p>
+  </div>
+
+  <div class="card edu-card guide-block">
+    <h3>🏁 ¿Qué es un Treasure Hunt (TH)?</h3>
+    <p>Los Treasure Hunt son modelos especiales que Mattel produce en cantidades limitadas dentro de cada case (caja de 72 autos). Se identifican por:</p>
+    <ul>
+      <li>Un logo de llama oculto en la carrocería <b>o</b> una llama detrás del auto en el blister.</li>
+      <li>Colores especiales o rines diferentes al modelo regular.</li>
+      <li>Se producen aproximadamente <b>1 por cada 2–3 cajas</b>.</li>
+    </ul>
+    <h3>💎 ¿Qué es un Super Treasure Hunt (STH)?</h3>
+    <p>Los Super Treasure Hunt son la versión <b>premium</b> de los TH, mucho más raros y valiosos:</p>
+    <ul>
+      <li>Pintura <b>Spectraflame</b> (cambia de color según la luz, efecto "caramelo").</li>
+      <li>Rines de goma <b>Real Riders</b> (neumáticos de caucho, no plástico).</li>
+      <li>Base de <b>metal</b> (más pesado que el plástico).</li>
+      <li>Logo de llama en la carrocería.</li>
+      <li>≈ 1 por cada 10–15 cajas. Reventa: <b>5x a 20x</b> el precio original.</li>
+    </ul>
+    <h3>🇨🇱 Estrategia de caza en Chile</h3>
+    <ol>
+      <li>Conoce los días de reposición (generalmente martes/jueves por la mañana).</li>
+      <li>Revisa <b>TODOS</b> los ganchos, no solo los de adelante.</li>
+      <li>Los TH/STH a veces están "escondidos" detrás de otros autos.</li>
+      <li>Lleva tu checklist de los TH/STH del case actual (pestaña Alertas).</li>
+      <li>En Chile los cases llegan con <b>2–3 meses de retraso</b> respecto a EE.UU.</li>
+      <li>Mercado de reventa en crecimiento: MercadoLibre, grupos de Facebook y ferias.</li>
+    </ol>
+    <h3>💰 Precios en Chile (2026, referenciales)</h3>
+    <ul>
+      <li>Regular Mainline: $3.990 – $5.990 CLP</li>
+      <li>TH: retail $3.990 – $5.990 · reventa $15.000 – $30.000 CLP</li>
+      <li>STH: retail $3.990 – $5.990 · reventa $40.000 – $120.000 CLP</li>
+      <li>Car Culture / Premium: $7.990 – $12.990 CLP</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== SECCIÓN 4: CALCULADORA ==================== -->
+<section id="sec-calc" class="section">
+  <h1 class="section-title">🧮 Calculadora de Flip</h1>
+  <p class="section-sub">¿Vale la pena comprarlo para revender? Calcula tu ganancia neta real con todos los costos incluidos.</p>
+
+  <div class="card">
+    <div class="field">
+      <label>Cargar desde la base de datos (opcional)</label>
+      <select id="calcModel"><option value="">— Selecciona un modelo —</option></select>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Precio de compra (CLP)</label>
+        <input type="number" id="calcBuy" inputmode="numeric" placeholder="4990" min="0">
+      </div>
+      <div class="field">
+        <label>Precio de venta estimado (CLP)</label>
+        <input type="number" id="calcSell" inputmode="numeric" placeholder="25000" min="0">
+      </div>
+      <div class="field">
+        <label>Envío (CLP)</label>
+        <input type="number" id="calcShip" inputmode="numeric" placeholder="3500" min="0" value="0">
+      </div>
+      <div class="field">
+        <label>Empaque y otros (CLP)</label>
+        <input type="number" id="calcPack" inputmode="numeric" placeholder="500" min="0" value="0">
+      </div>
+    </div>
+    <div class="field">
+      <label style="display:flex;align-items:center;gap:10px;text-transform:none;font-size:14px;color:var(--text)">
+        <input type="checkbox" id="calcML" checked style="width:22px;height:22px">
+        Vendo por MercadoLibre (comisión ~12% + impuestos sobre la venta)
+      </label>
+    </div>
+    <button class="btn btn-primary btn-block" id="btnCalc">💰 Calcular ganancia</button>
+  </div>
+
+  <div class="calc-result card hidden" id="calcResult">
+    <span class="muted small" style="text-transform:uppercase;letter-spacing:1px;font-weight:800">Ganancia neta estimada</span>
+    <div class="net" id="calcNet">$0</div>
+    <div class="roi" id="calcRoi">ROI 0%</div>
+    <div id="calcDetail" class="small muted" style="margin-top:10px"></div>
+    <div id="calcVerdict"></div>
+  </div>
+
+  <div class="card">
+    <h3>📊 Márgenes típicos por tipo</h3>
+    <table class="margin-table">
+      <thead><tr><th>Tipo</th><th>Margen típico</th><th>¿Revender?</th></tr></thead>
+      <tbody>
+        <tr><td>⚪ Regular</td><td>0%</td><td>❌ No revender</td></tr>
+        <tr><td>🔥 TH</td><td>200–400%</td><td>✅ Siempre</td></tr>
+        <tr><td>💎 STH</td><td>500–2000%</td><td>🚀 Compra inmediata</td></tr>
+        <tr><td>⭐ Chase Premium</td><td>300–800%</td><td>✅ Sí</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== SECCIÓN 5: MAPA ==================== -->
+<section id="sec-mapa" class="section">
+  <h1 class="section-title">🗺️ Mapa de Caza Chile</h1>
+  <p class="section-sub">Dónde buscar, cuándo ir y qué probabilidad hay de encontrar TH/STH en cada lugar.</p>
+  <div id="mapList"></div>
+  <div class="tip-card">
+    <h4>💡 Regla de oro</h4>
+    <p class="small">Los empleados reponen los ganchos al abrir o en la mañana. Llegar <b>dentro de la primera hora</b> tras la reposición multiplica tus probabilidades. Sé amable con los reponedores: ellos saben cuándo llegan los cases.</p>
+  </div>
+</section>
+
+<!-- ==================== SECCIÓN 6: ALERTAS ==================== -->
+<section id="sec-alertas" class="section">
+  <h1 class="section-title">🔔 Alertas y Calendario</h1>
+  <p class="section-sub">Lanzamientos de cases, tus alertas personales y el checklist de modelos que estás buscando.</p>
+
+  <div class="card">
+    <h2>📅 Calendario de lanzamientos 2026/2027</h2>
+    <p class="muted small" style="margin-bottom:12px">Fechas estimadas. Recuerda: Chile recibe los cases ~2–3 meses después de EE.UU.</p>
+    <div id="calList"></div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Mis alertas</h2>
+    <div class="field">
+      <label>Tipo de alerta</label>
+      <select id="alertType">
+        <option value="case">📦 Llegada de case a Chile</option>
+        <option value="ml">🛒 Nuevo TH/STH en MercadoLibre Chile</option>
+        <option value="price">🎯 Precio objetivo alcanzado</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Detalle</label>
+      <input id="alertText" placeholder="Ej: Avisarme cuando llegue el Case D 2026" maxlength="120">
+    </div>
+    <div class="field">
+      <label>Fecha objetivo (opcional)</label>
+      <input type="date" id="alertDate">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnAddAlert">➕ Crear alerta</button>
+      <button class="btn btn-ghost" id="btnNotif">🔕 Activar notificaciones</button>
+    </div>
+    <div class="divider"></div>
+    <div id="alertList"></div>
+    <p class="kbd-note">Las alertas se guardan en tu dispositivo y se revisan cada vez que abres la app.</p>
+  </div>
+
+  <div class="card">
+    <h2>🎯 Checklist: modelos que busco</h2>
+    <p class="muted small" style="margin-bottom:10px">Márcalos desde la Enciclopedia (botón "Lo busco"). Cuando lo encuentres, tócalo aquí para marcarlo como encontrado.</p>
+    <div id="checkList"></div>
+  </div>
+</section>
+
+<!-- ==================== SECCIÓN 7: HISTORIAL ==================== -->
+<section id="sec-historial" class="section">
+  <h1 class="section-title">📖 Historial de Caza</h1>
+  <p class="section-sub">Tu registro personal de compras, ventas y estadísticas de cazador.</p>
+
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="card">
+    <h2>➕ Registrar hallazgo</h2>
+    <div class="form-grid">
+      <div class="field"><label>Fecha</label><input type="date" id="hDate"></div>
+      <div class="field"><label>Lugar</label><select id="hPlace"></select></div>
+    </div>
+    <div class="field"><label>Modelo</label><input id="hModel" list="hModelList" placeholder="Ej: '95 Mazda RX-7"><datalist id="hModelList"></datalist></div>
+    <div class="form-grid">
+      <div class="field"><label>Tipo</label>
+        <select id="hType">
+          <option value="REG">⚪ Regular</option>
+          <option value="TH">🔥 TH</option>
+          <option value="STH">💎 STH</option>
+          <option value="ZAMAC">🩶 Zamac</option>
+          <option value="CHASE">⭐ Chase Premium</option>
+        </select>
+      </div>
+      <div class="field"><label>Estado</label>
+        <select id="hStatus">
+          <option value="coleccion">🏆 En colección</option>
+          <option value="venta">🏷️ En venta</option>
+          <option value="vendido">💰 Vendido</option>
+        </select>
+      </div>
+      <div class="field"><label>Precio compra (CLP)</label><input type="number" id="hBuy" inputmode="numeric" placeholder="4990" min="0"></div>
+      <div class="field"><label>Precio venta (CLP, si aplica)</label><input type="number" id="hSell" inputmode="numeric" placeholder="0" min="0"></div>
+    </div>
+    <div class="field"><label>Foto (opcional)</label><input type="file" id="hPhoto" accept="image/*"></div>
+    <button class="btn btn-primary btn-block" id="btnAddHunt">💾 Guardar en el historial</button>
+  </div>
+
+  <div class="card">
+    <div class="btn-row" style="margin-bottom:12px">
+      <button class="btn btn-blue" id="btnCSV">📤 Exportar CSV</button>
+      <button class="btn btn-ghost" id="btnFilterHunts">Filtrar: Todos</button>
+    </div>
+    <div id="huntList"></div>
+  </div>
+</section>
+</main>
+
+<!-- ==================== TABBAR ==================== -->
+<nav class="tabbar" id="tabbar">
+  <button data-sec="sec-scanner" class="active"><span class="ti">📷</span>Scanner</button>
+  <button data-sec="sec-db"><span class="ti">📚</span>Encicl.</button>
+  <button data-sec="sec-guia"><span class="ti">🎓</span>Guía</button>
+  <button data-sec="sec-calc"><span class="ti">🧮</span>Calc.</button>
+  <button data-sec="sec-mapa"><span class="ti">🗺️</span>Mapa</button>
+  <button data-sec="sec-alertas"><span class="ti">🔔</span>Alertas</button>
+  <button data-sec="sec-historial"><span class="ti">📖</span>Historial</button>
+</nav>
+
+<!-- ==================== MODALES ==================== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div id="toast"></div>
+<script>
+/* ================================================================
+   HOT WHEELS HUNTER CHILE — App logic
+   Datos de demostración referenciales. Precios estimados.
+================================================================ */
+"use strict";
+
+/* ---------- Utilidades ---------- */
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+const fmtCLP = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("es-CL");
+const fmtUSD = (n) => "US$" + Math.round(Number(n) || 0);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { toast("⚠️ No se pudo guardar (almacenamiento lleno)"); } }
+};
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._h);
+  toast._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+function stars(n) { return "⭐".repeat(n); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+/* Ilustración SVG referencial del auto (sin fotos externas = 100% offline) */
+function carSVG(hex, type, id) {
+  const u = "g" + (id || uid());
+  const paint = type === "STH" ? `url(#${u})` : hex;
+  const tire = type === "STH" || type === "CHASE" ? "#0a0a0a" : "#1c1c1c";
+  const hub = type === "STH" || type === "CHASE" ? "#d7dde6" : "#7a7a7a";
+  const flame = (type === "TH" || type === "STH")
+    ? `<text x="98" y="57" font-size="15" text-anchor="middle">🔥</text>` : "";
+  const grad = type === "STH" ? `
+    <defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff2d78"/><stop offset=".28" stop-color="#ff8a00"/>
+      <stop offset=".5" stop-color="#ffe600"/><stop offset=".72" stop-color="#00c853"/>
+      <stop offset="1" stop-color="#2979ff"/>
+    </linearGradient></defs>` : "";
+  return `<svg viewBox="0 0 200 92" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración referencial del auto">
+    ${grad}
+    <path d="M14 62 Q17 47 44 44 L64 28 Q68 23 79 22 L128 22 Q141 23 149 31 L164 44 Q188 48 190 60 L190 66 Q190 70 184 70 L173 70 A17 17 0 0 0 139 70 L71 70 A17 17 0 0 0 37 70 L19 70 Q13 70 14 62 Z"
+      fill="${paint}" stroke="rgba(0,0,0,.4)" stroke-width="1.5"/>
+    <path d="M70 31 L80 25 L124 25 L136 33 L138 41 L66 41 Z" fill="#101820" opacity=".92"/>
+    <rect x="14" y="56" width="176" height="3" fill="rgba(255,255,255,.18)"/>
+    <circle cx="54" cy="70" r="14" fill="${tire}" stroke="#000" stroke-width="1.5"/>
+    <circle cx="54" cy="70" r="5.5" fill="${hub}"/>
+    <circle cx="156" cy="70" r="14" fill="${tire}" stroke="#000" stroke-width="1.5"/>
+    <circle cx="156" cy="70" r="5.5" fill="${hub}"/>
+    ${type === "ZAMAC" ? `<rect x="14" y="60" width="176" height="4" fill="rgba(255,255,255,.35)"/>` : ""}
+    ${flame}
+  </svg>`;
+}
+
+function signsFor(type, extra) {
+  const base = {
+    TH: ["Llama 🔥 en la carrocería o impresa detrás del auto en el blister",
+         "Color o rines distintos a la versión regular del mismo casting",
+         "Rines de plástico y base de plástico (eso lo separa del STH)",
+         "La tarjeta NO dice 'Treasure Hunt': es un chase oculto"],
+    STH: ["Pintura Spectraflame: brillo 'caramelo' que cambia con la luz",
+          "Rines de goma Real Riders (neumático blando, no plástico)",
+          "Base de metal → pesa notoriamente más",
+          "Llama 🔥 en la carrocería",
+          "Mismo Toy # que el regular: solo las señales físicas lo delatan"],
+    ZAMAC: ["Carrocería de metal SIN pintar (gris brillante)",
+            "NO es STH: variante ZAMAC, valor de colección propio"],
+    CHASE: ["Tarjeta marcada 0/5 (chase de serie premium)",
+            "Espectacular de encontrar: revisa el número en la tarjeta"],
+    REDED: ["Todo rojo, exclusivo Red Edition (Target EE.UU.)",
+            "Sin llama: NO es TH, aunque tiene buen valor"],
+    ID: ["Caja tipo cofre con chip NFC (línea Hot Wheels id)",
+         "Tiene Spectraflame y goma pero NO es un STH mainline"],
+    REG: ["Sin llama, pintura estándar, rines de plástico"]
+  };
+  return (base[type] || base.REG).concat(extra || []);
+}
+
+const TYPE_LABEL = { TH: "🔥 TH", STH: "💎 STH", REG: "⚪ Regular", ZAMAC: "🩶 Zamac", CHASE: "⭐ Chase", REDED: "🔴 Red Edition", ID: "📱 id Chase" };
+
+/* ---------- BASE DE DATOS (demo, 2023–2026) ----------
+   Campos: name, brand, year, series, type, color, hex, toy (Toy #),
+   kase (case), upc (demo), retail CLP, min/max reventa CLP, usd [min,max], diff 1-5, notes */
+const DB = [
+  /* ===== 2026 ===== */
+  { id: "th26-escort", name: "'70 Ford Escort RS1600", brand: "Ford", year: 2026, series: "Mainline · HW Race Day", type: "TH", color: "Blanco", hex: "#e9edf1", toy: "JBC21", kase: "B", upc: "194735260201", retail: 5490, min: 18000, max: 28000, usd: [15, 25], diff: 3, notes: "Clásico de rally, altamente buscado por coleccionistas de Ford en Chile." },
+  { id: "th26-nova", name: "'68 Chevy Nova", brand: "Chevrolet", year: 2026, series: "Mainline · HW Muscle Mania", type: "TH", color: "Burdeo", hex: "#7a1f2b", toy: "JBC45", kase: "C", upc: "194735260218", retail: 5490, min: 15000, max: 25000, usd: [12, 20], diff: 3, notes: "Muscle clásico; la llama va en el costado trasero." },
+  { id: "th26-prelude", name: "Honda Prelude", brand: "Honda", year: 2026, series: "Mainline · HW J-Imports", type: "TH", color: "Amarillo", hex: "#f2c200", toy: "JBC63", kase: "D", upc: "194735260225", retail: 5490, min: 15000, max: 22000, usd: [12, 18], diff: 3, notes: "" },
+  { id: "th26-belair", name: "'57 Chevy Bel Air", brand: "Chevrolet", year: 2026, series: "Mainline · HW Rod Squad", type: "TH", color: "Turquesa", hex: "#27b3b8", toy: "JBC77", kase: "E", upc: "194735260232", retail: 5490, min: 14000, max: 20000, usd: [10, 17], diff: 2, notes: "" },
+  { id: "th26-silvia", name: "Nissan Silvia (S15)", brand: "Nissan", year: 2026, series: "Mainline · HW Drift", type: "TH", color: "Celeste", hex: "#7cc4e8", toy: "JBC92", kase: "F", upc: "194735260249", retail: 5490, min: 18000, max: 26000, usd: [14, 22], diff: 4, notes: "Los JDM TH se venden muy rápido en grupos chilenos." },
+  { id: "sth26-r34", name: "Nissan Skyline GT-R (BNR34)", brand: "Nissan", year: 2026, series: "Mainline · HW J-Imports", type: "STH", color: "Spectraflame azul", hex: "#1b5fd9", toy: "JBC10", kase: "A", upc: "194735260256", retail: 5490, min: 70000, max: 110000, usd: [70, 110], diff: 5, notes: "El STH más buscado del año. Spectraflame azul + Real Riders. Si lo ves a retail: compra inmediata." },
+  { id: "sth26-countach", name: "Lamborghini Countach LP5000 QV", brand: "Lamborghini", year: 2026, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame verde", hex: "#00a651", toy: "JBC33", kase: "C", upc: "194735260263", retail: 5490, min: 60000, max: 90000, usd: [60, 90], diff: 5, notes: "" },
+
+  /* ===== 2025 ===== */
+  { id: "th25-quattro", name: "'87 Audi Quattro", brand: "Audi", year: 2025, series: "Mainline · HW Turbo", type: "TH", color: "Blanco", hex: "#f0f2f4", toy: "HYY14", kase: "B", upc: "194735250114", retail: 4990, min: 20000, max: 30000, usd: [18, 28], diff: 4, notes: "Leyenda del rally Grupo B. Muy cotizado en Chile; la llama va detrás del auto en el blister." },
+  { id: "th25-510", name: "'71 Datsun 510", brand: "Datsun", year: 2025, series: "Mainline · HW J-Imports", type: "TH", color: "Celeste", hex: "#8fd0f0", toy: "HYY02", kase: "A", upc: "194735250121", retail: 4990, min: 18000, max: 28000, usd: [15, 24], diff: 4, notes: "El '510' es de los JDM clásicos más líquidos para revender." },
+  { id: "th25-elcamino", name: "Custom '71 El Camino", brand: "Chevrolet", year: 2025, series: "Mainline · HW Muscle Mania", type: "TH", color: "Morado", hex: "#6b3fa0", toy: "HYY27", kase: "C", upc: "194735250138", retail: 4990, min: 15000, max: 25000, usd: [12, 20], diff: 3, notes: "" },
+  { id: "th25-rx7", name: "'95 Mazda RX-7", brand: "Mazda", year: 2025, series: "Mainline · HW J-Imports", type: "TH", color: "Amarillo", hex: "#f5c518", toy: "HYY31", kase: "D", upc: "194735250145", retail: 4990, min: 20000, max: 32000, usd: [18, 28], diff: 4, notes: "RX-7 amarillo: uno de los TH 2025 más pedidos. Se revende en horas en MercadoLibre." },
+  { id: "th25-nova", name: "'68 Chevy Nova", brand: "Chevrolet", year: 2025, series: "Mainline · HW Muscle Mania", type: "TH", color: "Naranjo", hex: "#e8722a", toy: "HYY48", kase: "E", upc: "194735250152", retail: 4990, min: 14000, max: 22000, usd: [11, 18], diff: 3, notes: "" },
+  { id: "th25-gt40", name: "Ford GT-40", brand: "Ford", year: 2025, series: "Mainline · HW Race Day", type: "TH", color: "Azul Golfo", hex: "#3d7dd8", toy: "HYY55", kase: "F", upc: "194735250169", retail: 4990, min: 18000, max: 26000, usd: [14, 22], diff: 4, notes: "" },
+  { id: "th25-datsun620", name: "Datsun 620", brand: "Datsun", year: 2025, series: "Mainline · HW Hot Trucks", type: "TH", color: "Rojo", hex: "#c22f2f", toy: "HYY66", kase: "G", upc: "194735250176", retail: 4990, min: 15000, max: 23000, usd: [12, 19], diff: 3, notes: "" },
+  { id: "th25-firebird", name: "'77 Pontiac Firebird", brand: "Pontiac", year: 2025, series: "Mainline · HW Muscle Mania", type: "TH", color: "Negro", hex: "#24262b", toy: "HYY79", kase: "H", upc: "194735250183", retail: 4990, min: 15000, max: 24000, usd: [12, 20], diff: 3, notes: "" },
+  { id: "sth25-porsche", name: "Porsche 911 GT3 RS", brand: "Porsche", year: 2025, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame azul", hex: "#1565c0", toy: "HYY05", kase: "A", upc: "194735250190", retail: 4990, min: 60000, max: 95000, usd: [60, 95], diff: 5, notes: "Porsche + STH = los más líquidos del mercado. Verifica Real Riders y base de metal." },
+  { id: "sth25-p1", name: "McLaren P1", brand: "McLaren", year: 2025, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame naranjo", hex: "#ff7518", toy: "HYY19", kase: "C", upc: "194735250206", retail: 4990, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "" },
+  { id: "sth25-camaro", name: "'69 Chevy Camaro", brand: "Chevrolet", year: 2025, series: "Mainline · HW Muscle Mania", type: "STH", color: "Spectraflame rojo", hex: "#b71c1c", toy: "HYY41", kase: "E", upc: "194735250213", retail: 4990, min: 50000, max: 80000, usd: [50, 80], diff: 5, notes: "Clásico americano con gran demanda local." },
+
+  /* ===== 2024 ===== */
+  { id: "th24-rx3", name: "Mazda RX-3", brand: "Mazda", year: 2024, series: "Mainline · HW J-Imports", type: "TH", color: "Verde", hex: "#2e7d46", toy: "HTC08", kase: "B", upc: "194735240081", retail: 4990, min: 16000, max: 25000, usd: [13, 21], diff: 4, notes: "" },
+  { id: "th24-r30", name: "'82 Nissan Skyline (R30)", brand: "Nissan", year: 2024, series: "Mainline · HW J-Imports", type: "TH", color: "Plata", hex: "#b9c2cc", toy: "HTC15", kase: "C", upc: "194735240098", retail: 4990, min: 18000, max: 27000, usd: [14, 23], diff: 4, notes: "" },
+  { id: "th24-ae86", name: "Toyota AE86 Sprinter Trueno", brand: "Toyota", year: 2024, series: "Mainline · HW Drift", type: "TH", color: "Blanco/Negro panda", hex: "#e5e5e5", toy: "HTC22", kase: "D", upc: "194735240104", retail: 4990, min: 20000, max: 30000, usd: [16, 26], diff: 5, notes: "El AE86 mueve multitudes: de los TH 2024 más rápidos de vender." },
+  { id: "th24-gto", name: "'67 Pontiac GTO", brand: "Pontiac", year: 2024, series: "Mainline · HW Muscle Mania", type: "TH", color: "Azul", hex: "#2952a3", toy: "HTC30", kase: "E", upc: "194735240111", retail: 4990, min: 14000, max: 21000, usd: [11, 17], diff: 3, notes: "" },
+  { id: "th24-focus", name: "Ford Focus RS", brand: "Ford", year: 2024, series: "Mainline · HW Rally", type: "TH", color: "Azul nitroso", hex: "#1e88e5", toy: "HTC44", kase: "F", upc: "194735240128", retail: 4990, min: 14000, max: 20000, usd: [11, 16], diff: 3, notes: "" },
+  { id: "th24-charger500", name: "'69 Dodge Charger 500", brand: "Dodge", year: 2024, series: "Mainline · HW Muscle Mania", type: "TH", color: "Verde oscuro", hex: "#1d4d2b", toy: "HTC51", kase: "G", upc: "194735240135", retail: 4990, min: 15000, max: 23000, usd: [12, 19], diff: 3, notes: "" },
+  { id: "th24-elcamino80", name: "'80 El Camino", brand: "Chevrolet", year: 2024, series: "Mainline · HW Hot Trucks", type: "TH", color: "Café", hex: "#6d4c2f", toy: "HTC63", kase: "H", upc: "194735240142", retail: 4990, min: 13000, max: 19000, usd: [10, 15], diff: 2, notes: "" },
+  { id: "th24-mini", name: "'67 Austin Mini Van", brand: "Austin", year: 2024, series: "Mainline · HW Metro", type: "TH", color: "Crema", hex: "#e8dcc0", toy: "HTC70", kase: "J", upc: "194735240159", retail: 4990, min: 13000, max: 20000, usd: [10, 16], diff: 3, notes: "" },
+  { id: "th24-vwt3", name: "Volkswagen T3 Custom", brand: "Volkswagen", year: 2024, series: "Mainline · HW Vans", type: "TH", color: "Verde menta", hex: "#9adbb8", toy: "HTC88", kase: "K", upc: "194735240166", retail: 4990, min: 14000, max: 21000, usd: [11, 17], diff: 3, notes: "" },
+  { id: "sth24-miura", name: "'71 Lamborghini Miura SV", brand: "Lamborghini", year: 2024, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame dorado", hex: "#c9a227", toy: "HTC05", kase: "A", upc: "194735240173", retail: 4990, min: 55000, max: 90000, usd: [55, 90], diff: 5, notes: "" },
+  { id: "sth24-500e", name: "Mercedes-Benz 500 E", brand: "Mercedes-Benz", year: 2024, series: "Mainline · HW Turbo", type: "STH", color: "Spectraflame gris", hex: "#546e7a", toy: "HTC19", kase: "C", upc: "194735240180", retail: 4990, min: 45000, max: 70000, usd: [45, 70], diff: 5, notes: "" },
+  { id: "sth24-wagon", name: "Datsun Bluebird 510 Wagon", brand: "Datsun", year: 2024, series: "Mainline · HW J-Imports", type: "STH", color: "Spectraflame burdeo", hex: "#801e28", toy: "HTC37", kase: "F", upc: "194735240197", retail: 4990, min: 50000, max: 80000, usd: [50, 80], diff: 5, notes: "" },
+
+  /* ===== 2023 ===== */
+  { id: "th23-volvo", name: "Volvo 240 Drift Wagon", brand: "Volvo", year: 2023, series: "Mainline · HW Drift", type: "TH", color: "Amarillo", hex: "#f0c419", toy: "HKG12", kase: "C", upc: "194735230121", retail: 4790, min: 18000, max: 28000, usd: [15, 24], diff: 4, notes: "Fenómeno de culto: la wagon drift fue de los TH 2023 más virales." },
+  { id: "th23-civic", name: "Honda Civic Si", brand: "Honda", year: 2023, series: "Mainline · HW J-Imports", type: "TH", color: "Rojo", hex: "#c62828", toy: "HKG20", kase: "D", upc: "194735230138", retail: 4790, min: 14000, max: 21000, usd: [11, 17], diff: 3, notes: "" },
+  { id: "th23-svo", name: "'84 Mustang SVO", brand: "Ford", year: 2023, series: "Mainline · HW Turbo", type: "TH", color: "Plata", hex: "#b9c2cc", toy: "HKG33", kase: "E", upc: "194735230145", retail: 4790, min: 13000, max: 20000, usd: [10, 16], diff: 3, notes: "" },
+  { id: "th23-charger", name: "'70 Dodge Charger R/T", brand: "Dodge", year: 2023, series: "Mainline · HW Muscle Mania", type: "TH", color: "Morado", hex: "#5e35b1", toy: "HKG41", kase: "F", upc: "194735230152", retail: 4790, min: 15000, max: 23000, usd: [12, 19], diff: 3, notes: "" },
+  { id: "th23-jeep", name: "Jeep CJ-7", brand: "Jeep", year: 2023, series: "Mainline · HW Dirt", type: "TH", color: "Verde", hex: "#33691e", toy: "HKG56", kase: "H", upc: "194735230169", retail: 4790, min: 13000, max: 19000, usd: [10, 15], diff: 2, notes: "" },
+  { id: "th23-nsx", name: "'90 Acura NSX", brand: "Acura", year: 2023, series: "Mainline · HW J-Imports", type: "TH", color: "Blanco", hex: "#eceff1", toy: "HKG64", kase: "J", upc: "194735230176", retail: 4790, min: 17000, max: 26000, usd: [14, 22], diff: 4, notes: "" },
+  { id: "th23-rs2", name: "Audi RS 2 Avant", brand: "Audi", year: 2023, series: "Mainline · HW Wagons", type: "TH", color: "Azul RS", hex: "#1565c0", toy: "HKG77", kase: "K", upc: "194735230183", retail: 4790, min: 18000, max: 27000, usd: [14, 23], diff: 4, notes: "" },
+  { id: "th23-csl", name: "'73 BMW 3.0 CSL", brand: "BMW", year: 2023, series: "Mainline · HW Turbo", type: "TH", color: "Blanco alpina", hex: "#f5f5f5", toy: "HKG85", kase: "L", upc: "194735230190", retail: 4790, min: 16000, max: 24000, usd: [13, 20], diff: 3, notes: "" },
+  { id: "th23-n600", name: "Custom '70 Honda N600", brand: "Honda", year: 2023, series: "Mainline · HW J-Imports", type: "TH", color: "Naranjo", hex: "#ef6c00", toy: "HKG91", kase: "M", upc: "194735230206", retail: 4790, min: 14000, max: 22000, usd: [11, 18], diff: 3, notes: "" },
+  { id: "th23-mustang65", name: "'65 Mustang 2+2 Fastback", brand: "Ford", year: 2023, series: "Mainline · HW Muscle Mania", type: "TH", color: "Celeste", hex: "#81d4fa", toy: "HKG99", kase: "N", upc: "194735230213", retail: 4790, min: 15000, max: 23000, usd: [12, 19], diff: 3, notes: "" },
+  { id: "sth23-riviera", name: "'64 Buick Riviera", brand: "Buick", year: 2023, series: "Mainline · HW Muscle Mania", type: "STH", color: "Spectraflame violeta", hex: "#6a1b9a", toy: "HKG06", kase: "A", upc: "194735230220", retail: 4790, min: 45000, max: 70000, usd: [45, 70], diff: 5, notes: "" },
+  { id: "sth23-gasser", name: "'62 Corvette Gasser", brand: "Chevrolet", year: 2023, series: "Mainline · HW Gassers", type: "STH", color: "Spectraflame celeste", hex: "#4fc3f7", toy: "HKG15", kase: "D", upc: "194735230237", retail: 4790, min: 50000, max: 85000, usd: [50, 85], diff: 5, notes: "El Gasser STH es leyenda moderna: de los más caros de 2023." },
+  { id: "sth23-fj40", name: "Toyota Land Cruiser FJ40", brand: "Toyota", year: 2023, series: "Mainline · HW Dirt", type: "STH", color: "Spectraflame beige", hex: "#c8b287", toy: "HKG48", kase: "H", upc: "194735230244", retail: 4790, min: 45000, max: 75000, usd: [45, 75], diff: 5, notes: "" },
+
+  /* ===== Variantes y trampas (referencia) ===== */
+  { id: "zm25-r33", name: "Nissan Skyline GT-R (R33) ZAMAC", brand: "Nissan", year: 2025, series: "Mainline · ZAMAC (Walmart)", type: "ZAMAC", color: "Metal crudo", hex: "#9aa7b8", toy: "HYY90", kase: "E", upc: "194735250220", retail: 5490, min: 25000, max: 40000, usd: [22, 35], diff: 4, notes: "⚠️ Parece especial, pero NO es STH: es un ZAMAC. Valioso igual, sobre todo en Chile donde casi no entran." },
+  { id: "zm24-chevelle", name: "'70 Chevelle SS ZAMAC", brand: "Chevrolet", year: 2024, series: "Mainline · ZAMAC (Walmart)", type: "ZAMAC", color: "Metal crudo", hex: "#9aa7b8", toy: "HTC95", kase: "G", upc: "194735240203", retail: 4990, min: 18000, max: 30000, usd: [16, 26], diff: 4, notes: "" },
+  { id: "re25-camaro", name: "'69 Camaro Red Edition", brand: "Chevrolet", year: 2025, series: "Red Edition (Target)", type: "REDED", color: "Rojo", hex: "#d32f2f", toy: "HYR12", kase: "—", upc: "194735250237", retail: 5490, min: 20000, max: 35000, usd: [18, 30], diff: 4, notes: "⚠️ Sin llama: no es TH. Aun así tiene buena reventa por ser exclusivo." },
+  { id: "id24-tesla", name: "Tesla Model S Plaid id Chase", brand: "Tesla", year: 2024, series: "Hot Wheels id", type: "ID", color: "Spectraflame plata", hex: "#90a4ae", toy: "HBG00", kase: "—", upc: "194735240210", retail: 9990, min: 30000, max: 50000, usd: [25, 45], diff: 4, notes: "⚠️ Tiene Spectraflame y rines de goma, pero es de la línea id (con chip NFC), no un STH mainline." },
+  { id: "ch25-laurel", name: "Nissan Laurel 2000 SGX Chase", brand: "Nissan", year: 2025, series: "Car Culture · Chase 0/5", type: "CHASE", color: "Negro", hex: "#212121", toy: "HRV88", kase: "—", upc: "194735250244", retail: 9990, min: 40000, max: 70000, usd: [35, 60], diff: 5, notes: "Chase premium marcado 0/5 en la tarjeta. Nivel STH de dificultad." },
+  { id: "th26-f40", name: "Ferrari F40", brand: "Ferrari", year: 2026, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame rosso", hex: "#d50000", toy: "JBD05", kase: "H", upc: "194735260270", retail: 5490, min: 80000, max: 120000, usd: [80, 120], diff: 5, notes: "Si Mattel lo confirma como STH, será EL santo grial del año." },
+  { id: "th26-pajero", name: "Mitsubishi Pajero Evolution", brand: "Mitsubishi", year: 2026, series: "Mainline · HW Rally", type: "TH", color: "Blanco rally", hex: "#eceff1", toy: "JBD18", kase: "G", upc: "194735260287", retail: 5490, min: 17000, max: 26000, usd: [14, 22], diff: 4, notes: "El Pajero Dakar tiene fanaticada propia en Chile." },
+  { id: "th25-ranchero", name: "'72 Ford Ranchero", brand: "Ford", year: 2025, series: "Mainline · HW Hot Trucks", type: "TH", color: "Verde lima", hex: "#9ccc65", toy: "HYY84", kase: "J", upc: "194735250251", retail: 4990, min: 14000, max: 21000, usd: [11, 17], diff: 3, notes: "" },
+  { id: "th24-miata", name: "'90 Mazda MX-5 Miata", brand: "Mazda", year: 2024, series: "Mainline · HW Roadsters", type: "TH", color: "Rojo clásico", hex: "#c62828", toy: "HTC92", kase: "L", upc: "194735240227", retail: 4990, min: 15000, max: 23000, usd: [12, 19], diff: 3, notes: "" }
+];
+DB.forEach((m) => { m.signs = signsFor(m.type); m.factor = Math.round(m.min / m.retail) + "x–" + Math.round(m.max / m.retail) + "x"; });
+
+/* ---------- TIENDAS / MAPA DE CAZA ---------- */
+const STORES = [
+  { cat: "🛒 Supermercados y retail", name: "Líder / Walmart Chile", restock: "Jueves por la mañana (varía por tienda)", prob: 4, best: "Jueves 9:00–11:00", tips: "Llegan los jueves por la mañana. Revisa los ganchos del fondo y las cajas sin abrir cerca del pasillo de juguetes." },
+  { cat: "🛒 Supermercados y retail", name: "Jumbo / Cencosud", restock: "Martes y jueves", prob: 3, best: "Martes a primera hora", tips: "Cases menos 'peinados' que en Líder. Buenos hallazgos en tiendas de barrios altos con poco coleccionista." },
+  { cat: "🛒 Supermercados y retail", name: "Santa Isabel / Unimarc", restock: "Irregular", prob: 2, best: "Media mañana", tips: "Poca rotación pero nadie revisa: los TH pueden llevar semanas colgados." },
+  { cat: "🏬 Tiendas por departamento", name: "Paris", restock: "Mensual aprox.", prob: 2, best: "Lunes tras cierre de ofertas", tips: "A veces liquidan mainlines: oportunidad para armar lote de customs." },
+  { cat: "🏬 Tiendas por departamento", name: "Falabella", restock: "Quincenal", prob: 2, best: "Mañanas de semana", tips: "Ocasionalmente traen series premium (Car Culture) antes que otros." },
+  { cat: "🏬 Tiendas por departamento", name: "Ripley", restock: "Irregular", prob: 2, best: "Mañanas", tips: "Menos competencia de cazadores; revisa la sección de liquidación." },
+  { cat: "🧸 Jugueterías", name: "Juguetón / ToyWorld / toystores", restock: "Semanal", prob: 3, best: "Día de llegada de camión (pregunta al dependiente)", tips: "Precios algo más altos, pero stock variado y a veces series importadas." },
+  { cat: "🏪 Comercio de barrio", name: "Bazares y tiendas de barrio", prob: 2, restock: "Aleatorio", best: "Fines de semana", tips: "Joyas ocultas: mainlines antiguos a precio de huevo. Lleva efectivo." },
+  { cat: "🎪 Ferias y persas", name: "Persa Biobío (Santiago)", restock: "Sábados y domingos", prob: 4, best: "Sábado 10:00", tips: "Precios de reventa, pero puedes negociar lotes. Ideal para completar series y conocer coleccionistas." },
+  { cat: "🎪 Ferias y persas", name: "Persa Víctor Manuel", restock: "Fines de semana", prob: 3, best: "Domingo temprano", tips: "Busca los puestos de juguetes usados: a veces venden TH sin saberlo." },
+  { cat: "🎪 Ferias y persas", name: "Ferias de coleccionismo / eventos", restock: "Fechas puntuales", prob: 5, best: "Primer día, primera hora", tips: "El mejor lugar para STH y piezas antiguas. Lleva tu checklist y presupuesto definido." },
+  { cat: "💻 Online", name: "MercadoLibre Chile", restock: "24/7", prob: 5, best: "Noches (nuevas publicaciones)", tips: "Crea alertas de búsqueda ('hot wheels th', 'super treasure hunt'). Desconfía de fotos de catálogo: pide foto real del auto." },
+  { cat: "💻 Online", name: "Facebook Marketplace / grupos", restock: "24/7", prob: 4, best: "Domingos en la noche", tips: "Grupos de coleccionistas chilenos: trueques y precios justos. Revisa reputación antes de transferir." }
+];
+
+/* ---------- CALENDARIO DE LANZAMIENTOS (estimado) ---------- */
+const CALENDAR = [
+  { m: "ENE", d: "2026", t: "Case A–B 2026 (EE.UU.)", s: "Primeros TH/STH del año. En Chile se ven ~marzo–abril." },
+  { m: "MAR", d: "2026", t: "Case A–B llegan a Chile", s: "Revisa Líder y Jumbo: primera ola de TH 2026 en ganchos." },
+  { m: "ABR", d: "2026", t: "Case C–D 2026 (EE.UU.)", s: "Nuevos STH confirmados en redes de coleccionistas." },
+  { m: "JUN", d: "2026", t: "Case C–D llegan a Chile", s: "Ojo con el Skyline R34 y Countach STH: desaparecen el mismo día." },
+  { m: "JUL", d: "2026", t: "Case E–F 2026 (EE.UU.)", s: "Mitad de año: Mattel suele esconder los mejores TH aquí." },
+  { m: "SEP", d: "2026", t: "Case E–F llegan a Chile", s: "Temporada alta: más reposición por ventas de primavera." },
+  { m: "OCT", d: "2026", t: "Case G–H + exclusivos navideños", s: "Llegan series premium de fin de año al retail chileno." },
+  { m: "DIC", d: "2026", t: "Navidad: reposición masiva", s: "El retail repone fuerte; también hay más reventa en Marketplace." },
+  { m: "ENE", d: "2027", t: "Case A–B 2027 (EE.UU.)", s: "Nuevo año de caza: actualiza tu checklist con los filtrados." }
+];
+</script>
+<script>
+/* ================================================================
+   LÓGICA DE LA APP
+================================================================ */
+"use strict";
+
+/* ---------- Navegación por tabs ---------- */
+$$("#tabbar button").forEach((b) => b.addEventListener("click", () => showSection(b.dataset.sec)));
+function showSection(id) {
+  $$(".section").forEach((s) => s.classList.toggle("active", s.id === id));
+  $$("#tabbar button").forEach((b) => b.classList.toggle("active", b.dataset.sec === id));
+  window.scrollTo({ top: 0, behavior: "instant" });
+  if (id !== "sec-scanner") stopCamera();
+}
+
+/* ---------- Tema claro/oscuro ---------- */
+const theme = store.get("hwh_theme", "dark");
+if (theme === "light") { document.body.classList.add("light"); $("#btnTheme").textContent = "☀️"; }
+$("#btnTheme").addEventListener("click", () => {
+  document.body.classList.toggle("light");
+  const light = document.body.classList.contains("light");
+  $("#btnTheme").textContent = light ? "☀️" : "🌙";
+  store.set("hwh_theme", light ? "light" : "dark");
+});
+
+/* ---------- Modal genérico ---------- */
+function openModal(html) { $("#modalContent").innerHTML = `<button class="modal-close" onclick="closeModal()">✕</button>` + html; $("#modalOverlay").classList.add("open"); }
+function closeModal() { $("#modalOverlay").classList.remove("open"); }
+$("#modalOverlay").addEventListener("click", (e) => { if (e.target.id === "modalOverlay") closeModal(); });
+
+/* ================================================================
+   SECCIÓN 1: SCANNER
+================================================================ */
+let camStream = null, detHandle = null, lastScan = 0;
+
+async function startCamera() {
+  const status = $("#scanStatus");
+  if (!navigator.mediaDevices?.getUserMedia) {
+    status.textContent = "❌ Cámara no disponible. Usa HTTPS/localhost o la búsqueda manual.";
+    return;
+  }
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    $("#camVideo").srcObject = camStream;
+    await $("#camVideo").play();
+    $("#cameraBox").classList.add("on");
+    $("#btnCamStart").classList.add("hidden");
+    $("#btnCamStop").classList.remove("hidden");
+    if ("BarcodeDetector" in window) {
+      status.textContent = "🎯 Apunta al código de barras…";
+      const detector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39"] });
+      const loop = async () => {
+        if (!camStream) return;
+        try {
+          const codes = await detector.detect($("#camVideo"));
+          if (codes.length && Date.now() - lastScan > 2500) {
+            lastScan = Date.now();
+            lookupCode(codes[0].rawValue);
+          }
+        } catch { /* frame sin código */ }
+        detHandle = requestAnimationFrame(loop);
+      };
+      loop();
+    } else {
+      status.textContent = "⚠️ Tu navegador no soporta lectura automática de códigos. Usa la búsqueda manual de abajo.";
+    }
+  } catch (err) {
+    status.textContent = "❌ No se pudo abrir la cámara: " + (err.name === "NotAllowedError" ? "permiso denegado" : err.message);
+  }
+}
+function stopCamera() {
+  if (detHandle) cancelAnimationFrame(detHandle);
+  detHandle = null;
+  if (camStream) { camStream.getTracks().forEach((t) => t.stop()); camStream = null; }
+  $("#cameraBox").classList.remove("on");
+  $("#btnCamStart")?.classList.remove("hidden");
+  $("#btnCamStop")?.classList.add("hidden");
+}
+$("#btnCamStart").addEventListener("click", startCamera);
+$("#btnCamStop").addEventListener("click", stopCamera);
+
+function lookupCode(code) {
+  const clean = String(code).replace(/\D/g, "");
+  const hit = DB.find((m) => m.upc === clean);
+  $("#scanStatus").textContent = "Código leído: " + clean;
+  if (hit) renderResult(hit);
+  else renderNotFound(clean);
+  navigator.vibrate?.(200);
+}
+
+$("#scanManual").addEventListener("input", (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  if (q.length < 3) return;
+  const hit = DB.find((m) =>
+    m.upc === q.replace(/\D/g, "") && q.replace(/\D/g, "").length > 6 ||
+    m.toy.toLowerCase() === q ||
+    m.name.toLowerCase().includes(q)
+  );
+  if (hit) renderResult(hit);
+});
+
+function renderResult(m) {
+  const cls = m.type === "TH" ? "TH" : m.type === "STH" ? "STH" : "REG";
+  const banner = cls === "TH" ? "🔥 ¡TREASURE HUNT!" : cls === "STH" ? "💎 ¡SUPER TREASURE HUNT!" : "⚪ Modelo regular";
+  $("#scanResult").innerHTML = `
+    <div class="result-card">
+      <div class="result-banner ${cls}">${banner}</div>
+      <div class="result-body">
+        <div class="result-car">${carSVG(m.hex, m.type, m.id)}</div>
+        <h3 style="text-align:center">${esc(m.name)}</h3>
+        <p class="muted small" style="text-align:center;margin:4px 0">${m.year} · ${esc(m.series)} · Toy # ${m.toy} · Case ${m.kase}</p>
+        <p class="kbd-note">Ilustración referencial, no foto real del producto.</p>
+        <div class="price-grid">
+          <div class="price-cell"><span>Retail Chile</span><b>${fmtCLP(m.retail)}</b></div>
+          <div class="price-cell"><span>Reventa Chile</span><b>${fmtCLP(m.min)}–${fmtCLP(m.max)}</b></div>
+          <div class="price-cell gain"><span>Margen</span><b>${m.factor}</b></div>
+        </div>
+        <p class="small muted">🌎 Reventa internacional (eBay/ML): <b>${fmtUSD(m.usd[0])}–${fmtUSD(m.usd[1])}</b> · Dificultad: ${stars(m.diff)}</p>
+        <h4 style="margin:12px 0 2px">Señales de identificación</h4>
+        <ul class="sign-list">${m.signs.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
+        ${m.notes ? `<p class="small" style="margin-top:8px">📝 ${esc(m.notes)}</p>` : ""}
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-good" onclick="quickLog('${m.id}')">💾 Registrar compra</button>
+          <button class="btn btn-blue" onclick="toggleChecklist('${m.id}')">🎯 Lo busco</button>
+        </div>
+      </div>
+    </div>`;
+  $("#scanResult").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function renderNotFound(code) {
+  $("#scanResult").innerHTML = `
+    <div class="result-card">
+      <div class="result-banner NF">Código ${esc(code)} no está en la base de datos</div>
+      <div class="result-body">
+        <p class="small">Puede ser un regular o un modelo aún no cargado. Antes de soltarlo, verifícalo con el asistente:</p>
+        <button class="btn btn-blue btn-block" style="margin-top:12px" onclick="openWizard()">🧙 Abrir asistente ¿Es TH o STH?</button>
+      </div>
+    </div>`;
+}
+
+/* --- Comparación visual por foto --- */
+const compareSel = $("#compareSelect");
+compareSel.innerHTML = DB.map((m) => `<option value="${m.id}">${m.year} · ${esc(m.name)} (${TYPE_LABEL[m.type]})</option>`).join("");
+function renderCompareRef() {
+  const m = DB.find((x) => x.id === compareSel.value) || DB[0];
+  $("#compareRef").innerHTML = `${carSVG(m.hex, m.type, "cmp" + m.id)}<span>Referencia ${TYPE_LABEL[m.type]}</span>`;
+  $("#compareSigns").innerHTML = `<h4>✅ Verifica en tu auto:</h4><ul class="sign-list">${m.signs.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>`;
+}
+compareSel.addEventListener("change", () => { renderCompareRef(); if ($("#compareImg").src && $("#compareImg").src.startsWith("data:")) $("#compareWrap").classList.remove("hidden"); });
+$("#comparePhoto").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { $("#compareImg").src = r.result; $("#compareWrap").classList.remove("hidden"); renderCompareRef(); };
+  r.readAsDataURL(f);
+});
+renderCompareRef();
+
+/* --- Wizard: ¿Es TH o STH? --- */
+const WIZ = [
+  { q: "🔥 ¿Tiene el logo de llama en la carrocería o detrás del auto en el blister?", hint: "Revisa ambos costados del auto y el cartón tras la burbuja." },
+  { q: "🛞 ¿Los rines son de goma (Real Riders)?", hint: "La goma es blanda y mate; el plástico es duro y brillante." },
+  { q: "🌈 ¿La pintura cambia de color según el ángulo (Spectraflame)?", hint: "Muévelo bajo la luz: la Spectraflame tiene efecto 'caramelo' profundo." }
+];
+let wizStep = 0, wizAns = [];
+$("#btnWizard").addEventListener("click", openWizard);
+function openWizard() { wizStep = 0; wizAns = []; renderWizard(); }
+function renderWizard() {
+  if (wizStep < WIZ.length) {
+    const w = WIZ[wizStep];
+    openModal(`
+      <div class="wiz-dots">${WIZ.map((_, i) => `<i class="${i <= wizStep ? "on" : ""}"></i>`).join("")}</div>
+      <p class="wiz-q">${w.q}</p>
+      <p class="wiz-hint">${w.hint}</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="wizAnswer(true)">✅ Sí</button>
+        <button class="btn btn-ghost" onclick="wizAnswer(false)">❌ No</button>
+      </div>`);
+  } else {
+    const [flame, rubber, spectra] = wizAns;
+    let res, expl, cls;
+    if (!flame) { res = "⚪ REGULAR"; cls = "REG"; expl = "Sin llama no es TH ni STH. Puede ser Zamac, Red Edition u otro chase (revísalo igual por las dudas), pero a precio full no conviene para reventa."; }
+    else if (rubber && spectra) { res = "💎 ¡SUPER TREASURE HUNT!"; cls = "STH"; expl = "Llama + Real Riders + Spectraflame = STH confirmado. Verifica además la base de metal (más pesado). ¡Cómpralo YA a precio retail: margen 5x–20x!"; }
+    else { res = "🔥 ¡TREASURE HUNT!"; cls = "TH"; expl = "Tiene llama pero sin goma/Spectraflame completo: es un TH clásico. A precio retail ($3.990–$5.990) casi siempre conviene: margen 3x–6x."; }
+    openModal(`
+      <div class="result-card" style="margin-top:0">
+        <div class="result-banner ${cls}">${res}</div>
+        <div class="result-body">
+          <p class="small">${expl}</p>
+          <div class="btn-row" style="margin-top:14px">
+            <button class="btn btn-primary" onclick="closeModal();showSection('sec-calc')">🧮 Calcular flip</button>
+            <button class="btn btn-ghost" onclick="openWizard()">↺ Repetir</button>
+          </div>
+        </div>
+      </div>`);
+  }
+}
+function wizAnswer(a) { wizAns.push(a); wizStep++; renderWizard(); }
+
+/* ================================================================
+   SECCIÓN 2: BASE DE DATOS
+================================================================ */
+const dbFilter = { q: "", year: "all", type: "all" };
+const years = [...new Set(DB.map((m) => m.year))].sort((a, b) => b - a);
+$("#dbYearChips").innerHTML = `<button class="chip active" data-y="all">Todos</button>` + years.map((y) => `<button class="chip" data-y="${y}">${y}</button>`).join("");
+$("#dbTypeChips").innerHTML = `<button class="chip active" data-t="all">Todos</button>
+  <button class="chip" data-t="TH">🔥 TH</button><button class="chip" data-t="STH">💎 STH</button>
+  <button class="chip" data-t="ZAMAC">🩶 Zamac</button><button class="chip" data-t="CHASE">⭐ Chase</button><button class="chip" data-t="REDED">🔴 Red Ed.</button>`;
+$("#dbYearChips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (!b) return; dbFilter.year = b.dataset.y; $$("#dbYearChips .chip").forEach((c) => c.classList.toggle("active", c === b)); renderDB(); });
+$("#dbTypeChips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (!b) return; dbFilter.type = b.dataset.t; $$("#dbTypeChips .chip").forEach((c) => c.classList.toggle("active", c === b)); renderDB(); });
+$("#dbSearch").addEventListener("input", (e) => { dbFilter.q = e.target.value.trim().toLowerCase(); renderDB(); });
+
+function renderDB() {
+  const list = DB.filter((m) =>
+    (dbFilter.year === "all" || m.year === Number(dbFilter.year)) &&
+    (dbFilter.type === "all" || m.type === dbFilter.type) &&
+    (!dbFilter.q || (m.name + " " + m.brand + " " + m.toy + " " + m.series).toLowerCase().includes(dbFilter.q))
+  );
+  $("#dbCount").textContent = `${list.length} modelos`;
+  $("#dbGrid").innerHTML = list.map((m) => `
+    <div class="db-card" onclick="openModel('${m.id}')">
+      <div class="db-thumb">${carSVG(m.hex, m.type, "db" + m.id)}</div>
+      <div class="db-info">
+        <span class="badge b-${m.type === "REDED" ? "REDED" : m.type === "ID" ? "CHASE" : m.type}">${TYPE_LABEL[m.type]}</span>
+        <h4>${esc(m.name)}</h4>
+        <div class="meta">${m.year} · Case ${m.kase}</div>
+        <div class="price">${fmtCLP(m.min)} – ${fmtCLP(m.max)}</div>
+      </div>
+    </div>`).join("") || `<p class="muted">Sin resultados para ese filtro.</p>`;
+}
+
+function openModel(id) {
+  const m = DB.find((x) => x.id === id);
+  if (!m) return;
+  const inList = checklist.some((c) => c.id === id);
+  openModal(`
+    <div style="text-align:center;padding:6px 0 10px">${carSVG(m.hex, m.type, "md" + m.id)}</div>
+    <div style="text-align:center;margin-bottom:8px"><span class="badge b-${m.type === "REDED" ? "REDED" : m.type === "ID" ? "CHASE" : m.type}">${TYPE_LABEL[m.type]}</span></div>
+    <h3 style="text-align:center">${esc(m.name)}</h3>
+    <p class="muted small" style="text-align:center">${esc(m.brand)} · ${m.year} · ${esc(m.series)}</p>
+    <div class="price-grid">
+      <div class="price-cell"><span>Retail</span><b>${fmtCLP(m.retail)}</b></div>
+      <div class="price-cell"><span>Reventa CL</span><b>${fmtCLP(m.min)}–${fmtCLP(m.max)}</b></div>
+      <div class="price-cell gain"><span>Factor</span><b>${m.factor}</b></div>
+    </div>
+    <div class="price-grid" style="grid-template-columns:repeat(2,1fr)">
+      <div class="price-cell"><span>🌎 Internacional</span><b>${fmtUSD(m.usd[0])}–${fmtUSD(m.usd[1])}</b></div>
+      <div class="price-cell"><span>Dificultad</span><b>${stars(m.diff)}</b></div>
+    </div>
+    <p class="small muted" style="margin-top:6px">🎨 Color: ${esc(m.color)} · Toy # <b>${m.toy}</b> · Case ${m.kase} · UPC ${m.upc}</p>
+    <h4 style="margin:12px 0 2px">Señales de identificación</h4>
+    <ul class="sign-list">${m.signs.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
+    ${m.notes ? `<p class="small" style="margin-top:8px">📝 ${esc(m.notes)}</p>` : ""}
+    <p class="kbd-note">Ilustración referencial. Verifica precios reales en MercadoLibre antes de comprar.</p>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn ${inList ? "btn-danger" : "btn-blue"}" onclick="toggleChecklist('${m.id}');closeModal()">${inList ? "✕ Quitar de mi checklist" : "🎯 Lo estoy buscando"}</button>
+      <button class="btn btn-good" onclick="closeModal();quickLog('${m.id}')">💾 Registrar compra</button>
+    </div>`);
+}
+
+/* ================================================================
+   SECCIÓN 3: GUÍA (renders dinámicos)
+================================================================ */
+$("#blisterCar1").innerHTML = carSVG("#c0392b", "REG", "bl1");
+$("#blisterCar2").innerHTML = carSVG("#c0392b", "TH", "bl2");
+$("#vsExample").innerHTML = ["REG", "TH", "STH"].map((t) => `
+  <div class="vs-card ${t === "TH" ? "hl-th" : t === "STH" ? "hl-sth" : ""}">
+    ${carSVG("#1565c0", t, "vs" + t)}
+    <div style="margin-top:6px"><span class="badge b-${t}">${TYPE_LABEL[t]}</span></div>
+  </div>`).join("");
+
+/* ================================================================
+   SECCIÓN 4: CALCULADORA
+================================================================ */
+$("#calcModel").innerHTML += DB.map((m) => `<option value="${m.id}">${TYPE_LABEL[m.type]} ${esc(m.name)} (${m.year})</option>`).join("");
+$("#calcModel").addEventListener("change", (e) => {
+  const m = DB.find((x) => x.id === e.target.value);
+  if (!m) return;
+  $("#calcBuy").value = m.retail;
+  $("#calcSell").value = Math.round((m.min + m.max) / 2);
+});
+$("#btnCalc").addEventListener("click", () => {
+  const buy = +$("#calcBuy").value || 0, sell = +$("#calcSell").value || 0;
+  const ship = +$("#calcShip").value || 0, pack = +$("#calcPack").value || 0;
+  if (buy <= 0 || sell <= 0) { toast("Ingresa precio de compra y venta"); return; }
+  const mlFee = $("#calcML").checked ? Math.round(sell * 0.12) : 0;
+  const total = buy + ship + pack;
+  const net = sell - total - mlFee;
+  const roi = Math.round((net / total) * 100);
+  $("#calcResult").classList.remove("hidden");
+  $("#calcNet").textContent = fmtCLP(net);
+  $("#calcNet").style.color = net >= 0 ? "var(--good)" : "var(--bad)";
+  $("#calcRoi").textContent = `ROI ${roi}% · inversión total ${fmtCLP(total)}`;
+  $("#calcDetail").innerHTML = `Venta ${fmtCLP(sell)} − compra ${fmtCLP(buy)}${mlFee ? ` − comisión ML ${fmtCLP(mlFee)}` : ""}${ship ? ` − envío ${fmtCLP(ship)}` : ""}${pack ? ` − empaque ${fmtCLP(pack)}` : ""}`;
+  const v = $("#calcVerdict");
+  if (roi >= 150) v.innerHTML = `<span class="verdict v-buy">🚀 COMPRAR</span>`;
+  else if (roi >= 50) v.innerHTML = `<span class="verdict v-wait">🤔 ESPERAR / NEGOCIAR</span>`;
+  else v.innerHTML = `<span class="verdict v-nope">🚫 NO COMPRAR</span>`;
+});
+
+/* ================================================================
+   SECCIÓN 5: MAPA DE CAZA
+================================================================ */
+(function renderMap() {
+  const cats = [...new Set(STORES.map((s) => s.cat))];
+  $("#mapList").innerHTML = cats.map((c) => `
+    <p class="cat-title">${c}</p>
+    ${STORES.filter((s) => s.cat === c).map((s) => `
+      <div class="store-card">
+        <h4>${esc(s.name)} <span class="stars" title="Probabilidad TH/STH">${stars(s.prob)}</span></h4>
+        <div class="store-meta">
+          <span>📦 Reposición: <b>${esc(s.restock)}</b></span>
+          <span>⏰ Mejor horario: <b>${esc(s.best)}</b></span>
+        </div>
+        <p class="small muted">💡 ${esc(s.tips)}</p>
+      </div>`).join("")}`).join("");
+})();
+
+/* ================================================================
+   SECCIÓN 6: ALERTAS Y CHECKLIST
+================================================================ */
+let alerts = store.get("hwh_alerts", []);
+let checklist = store.get("hwh_checklist", []); // [{id, done}]
+
+$("#calList").innerHTML = CALENDAR.map((c) => `
+  <div class="cal-item">
+    <div class="cal-date"><b>${c.m}</b><span>${c.d}</span></div>
+    <div><b class="small">${esc(c.t)}</b><p class="small muted">${esc(c.s)}</p></div>
+  </div>`).join("");
+
+$("#btnAddAlert").addEventListener("click", () => {
+  const txt = $("#alertText").value.trim();
+  if (!txt) { toast("Escribe el detalle de la alerta"); return; }
+  alerts.push({ id: uid(), type: $("#alertType").value, text: txt, date: $("#alertDate").value || null, created: new Date().toISOString() });
+  store.set("hwh_alerts", alerts);
+  $("#alertText").value = ""; $("#alertDate").value = "";
+  renderAlerts();
+  toast("🔔 Alerta creada");
+});
+$("#btnNotif").addEventListener("click", async () => {
+  if (!("Notification" in window)) { toast("Tu navegador no soporta notificaciones"); return; }
+  const p = await Notification.requestPermission();
+  if (p === "granted") { $("#btnNotif").textContent = "🔔 Notificaciones ON"; toast("Notificaciones activadas"); }
+  else toast("Permiso de notificaciones denegado");
+});
+if ("Notification" in window && Notification.permission === "granted") $("#btnNotif").textContent = "🔔 Notificaciones ON";
+
+const ALERT_ICON = { case: "📦", ml: "🛒", price: "🎯" };
+function renderAlerts() {
+  $("#alertList").innerHTML = alerts.length ? alerts.map((a) => `
+    <div class="alert-item">
+      <span style="font-size:20px">${ALERT_ICON[a.type] || "🔔"}</span>
+      <div class="txt"><b class="small">${esc(a.text)}</b>${a.date ? `<p class="small muted">📅 ${a.date}</p>` : ""}</div>
+      <button class="btn btn-danger btn-sm" onclick="delAlert('${a.id}')">✕</button>
+    </div>`).join("") : `<p class="muted small">Sin alertas. Crea la primera arriba 👆</p>`;
+}
+function delAlert(id) { alerts = alerts.filter((a) => a.id !== id); store.set("hwh_alerts", alerts); renderAlerts(); }
+
+function toggleChecklist(id) {
+  const i = checklist.findIndex((c) => c.id === id);
+  if (i >= 0) { checklist.splice(i, 1); toast("Quitado del checklist"); }
+  else { checklist.push({ id, done: false }); toast("🎯 Agregado a tu checklist"); }
+  store.set("hwh_checklist", checklist);
+  renderChecklist();
+}
+function renderChecklist() {
+  const el = $("#checkList");
+  if (!checklist.length) { el.innerHTML = `<p class="muted small">No estás buscando nada aún. Agrégalos desde la 📚 Enciclopedia.</p>`; return; }
+  el.innerHTML = checklist.map((c) => {
+    const m = DB.find((x) => x.id === c.id);
+    if (!m) return "";
+    return `<div class="check-item ${c.done ? "done" : ""}" onclick="toggleDone('${c.id}')">
+      <div class="cb">${c.done ? "✓" : ""}</div>
+      ${carSVG(m.hex, m.type, "ck" + m.id)}
+      <div class="nm" style="flex:1"><b class="small">${esc(m.name)}</b><p class="small muted">${TYPE_LABEL[m.type]} · ${m.year} · Case ${m.kase} · reventa ${fmtCLP(m.min)}+</p></div>
+      <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();toggleChecklist('${c.id}')">✕</button>
+    </div>`;
+  }).join("");
+}
+function toggleDone(id) {
+  const c = checklist.find((x) => x.id === id);
+  if (c) { c.done = !c.done; store.set("hwh_checklist", checklist); renderChecklist(); if (c.done) toast("🎉 ¡Felicitaciones por el hallazgo!"); }
+}
+/* Revisar alertas con fecha al abrir la app */
+(function checkAlerts() {
+  const today = new Date().toISOString().slice(0, 10);
+  const due = alerts.filter((a) => a.date && a.date <= today);
+  if (due.length) setTimeout(() => {
+    toast("🔔 Tienes " + due.length + " alerta(s) pendiente(s)");
+    if ("Notification" in window && Notification.permission === "granted")
+      new Notification("Hot Wheels Hunter", { body: due.map((a) => a.text).join(" · ") });
+  }, 1500);
+})();
+
+/* ================================================================
+   SECCIÓN 7: HISTORIAL DE CAZA
+================================================================ */
+let hunts = store.get("hwh_hunts", []);
+let huntFilter = "todos";
+
+$("#hPlace").innerHTML = STORES.map((s) => `<option>${esc(s.name)}</option>`).join("") + `<option>Otro</option>`;
+$("#hModelList").innerHTML = DB.map((m) => `<option value="${esc(m.name)}">`).join("");
+$("#hDate").value = new Date().toISOString().slice(0, 10);
+
+let hPhotoData = null;
+$("#hPhoto").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (!f) { hPhotoData = null; return; }
+  const r = new FileReader();
+  r.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      const scale = Math.min(1, 320 / img.width);
+      c.width = img.width * scale; c.height = img.height * scale;
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      hPhotoData = c.toDataURL("image/jpeg", 0.7);
+    };
+    img.src = r.result;
+  };
+  r.readAsDataURL(f);
+});
+
+$("#btnAddHunt").addEventListener("click", () => {
+  const model = $("#hModel").value.trim();
+  const buy = +$("#hBuy").value || 0;
+  if (!model || buy <= 0) { toast("Completa modelo y precio de compra"); return; }
+  hunts.unshift({
+    id: uid(), date: $("#hDate").value || new Date().toISOString().slice(0, 10),
+    place: $("#hPlace").value, model, type: $("#hType").value, status: $("#hStatus").value,
+    buy, sell: +$("#hSell").value || 0, photo: hPhotoData
+  });
+  store.set("hwh_hunts", hunts);
+  $("#hModel").value = ""; $("#hBuy").value = ""; $("#hSell").value = ""; $("#hPhoto").value = ""; hPhotoData = null;
+  renderHunts(); renderStats();
+  toast("💾 Guardado en tu historial");
+});
+
+function quickLog(modelId) {
+  const m = DB.find((x) => x.id === modelId);
+  if (!m) return;
+  showSection("sec-historial");
+  $("#hModel").value = m.name;
+  $("#hType").value = (m.type === "REDED" || m.type === "ID") ? "REG" : m.type;
+  $("#hBuy").value = m.retail;
+  toast("Completa los datos y guarda 💾");
+}
+
+const FILTERS = ["todos", "coleccion", "venta", "vendido"];
+$("#btnFilterHunts").addEventListener("click", () => {
+  huntFilter = FILTERS[(FILTERS.indexOf(huntFilter) + 1) % FILTERS.length];
+  $("#btnFilterHunts").textContent = "Filtrar: " + { todos: "Todos", coleccion: "🏆 Colección", venta: "🏷️ En venta", vendido: "💰 Vendidos" }[huntFilter];
+  renderHunts();
+});
+
+function renderHunts() {
+  const list = hunts.filter((h) => huntFilter === "todos" || h.status === huntFilter);
+  $("#huntList").innerHTML = list.length ? list.map((h) => {
+    const gain = h.status === "vendido" && h.sell > 0 ? h.sell - h.buy : null;
+    const roi = gain !== null && h.buy > 0 ? Math.round((gain / h.buy) * 100) : null;
+    return `<div class="hunt-item">
+      <div class="h-img">${h.photo ? `<img src="${h.photo}" alt="">` : `<span style="font-size:30px">${h.type === "STH" ? "💎" : h.type === "TH" ? "🔥" : "🚗"}</span>`}</div>
+      <div class="h-body">
+        <h5>${esc(h.model)}</h5>
+        <div class="h-meta">${h.date} · ${esc(h.place)} · ${TYPE_LABEL[h.type] || h.type}</div>
+        <div class="h-money">Compra ${fmtCLP(h.buy)}${h.sell > 0 ? " → Venta " + fmtCLP(h.sell) : ""}${gain !== null ? ` · <span style="color:var(--good)">+${fmtCLP(gain)} (${roi}%)</span>` : ""}</div>
+      </div>
+      <div class="h-actions">
+        <span class="pill p-${h.status}">${{ coleccion: "Colección", venta: "En venta", vendido: "Vendido" }[h.status]}</span>
+        <button class="btn btn-blue btn-sm" onclick="shareHunt('${h.id}')">📤</button>
+        <button class="btn btn-danger btn-sm" onclick="delHunt('${h.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join("") : `<div class="empty-state"><div class="big">🏜️</div><p>Sin registros todavía.<br>¡Sal a cazar y vuelve con botín! 🔥</p></div>`;
+}
+function delHunt(id) {
+  if (!confirm("¿Eliminar este registro?")) return;
+  hunts = hunts.filter((h) => h.id !== id);
+  store.set("hwh_hunts", hunts);
+  renderHunts(); renderStats();
+}
+
+function renderStats() {
+  const now = new Date();
+  const inv = hunts.reduce((a, h) => a + h.buy, 0);
+  const earned = hunts.filter((h) => h.status === "vendido" && h.sell > 0).reduce((a, h) => a + (h.sell - h.buy), 0);
+  const thMonth = hunts.filter((h) => h.type === "TH" && h.date.slice(0, 7) === now.toISOString().slice(0, 7)).length;
+  const sthYear = hunts.filter((h) => h.type === "STH" && h.date.slice(0, 4) === String(now.getFullYear())).length;
+  const byPlace = {};
+  hunts.forEach((h) => { byPlace[h.place] = (byPlace[h.place] || 0) + (h.type === "TH" || h.type === "STH" ? 1 : 0); });
+  const bestPlace = Object.entries(byPlace).sort((a, b) => b[1] - a[1])[0];
+  const bestFlip = hunts.filter((h) => h.status === "vendido" && h.sell > h.buy && h.buy > 0)
+    .sort((a, b) => (b.sell - b.buy) / b.buy - (a.sell - a.buy) / a.buy)[0];
+  $("#statsGrid").innerHTML = `
+    <div class="stat"><b>${fmtCLP(inv)}</b><span>Total invertido</span></div>
+    <div class="stat hl"><b>${fmtCLP(earned)}</b><span>Total ganado</span></div>
+    <div class="stat"><b>🔥 ${thMonth}</b><span>TH este mes</span></div>
+    <div class="stat"><b>💎 ${sthYear}</b><span>STH este año</span></div>
+    <div class="stat"><b style="font-size:13px">${bestPlace && bestPlace[1] > 0 ? esc(bestPlace[0]) : "—"}</b><span>Tienda más productiva</span></div>
+    <div class="stat hl"><b style="font-size:13px">${bestFlip ? esc(bestFlip.model) + " (+" + Math.round(((bestFlip.sell - bestFlip.buy) / bestFlip.buy) * 100) + "%)" : "—"}</b><span>Mejor flip</span></div>`;
+}
+
+/* --- Exportar CSV --- */
+$("#btnCSV").addEventListener("click", () => {
+  if (!hunts.length) { toast("No hay registros para exportar"); return; }
+  const head = "Fecha,Lugar,Modelo,Tipo,Estado,Precio compra CLP,Precio venta CLP,Ganancia CLP,ROI %\n";
+  const rows = hunts.map((h) => {
+    const g = h.status === "vendido" && h.sell > 0 ? h.sell - h.buy : "";
+    const r = g !== "" && h.buy > 0 ? Math.round((g / h.buy) * 100) : "";
+    return [h.date, `"${h.place}"`, `"${h.model}"`, h.type, h.status, h.buy, h.sell || "", g, r].join(",");
+  }).join("\n");
+  const blob = new Blob(["﻿" + head + rows], { type: "text/csv;charset=utf-8" }); // BOM para Excel
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "hotwheels_hunter_historial.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("📤 CSV exportado");
+});
+
+/* --- Compartir hallazgo (genera imagen) --- */
+function shareHunt(id) {
+  const h = hunts.find((x) => x.id === id);
+  if (!h) return;
+  const c = document.createElement("canvas");
+  c.width = 900; c.height = 500;
+  const x = c.getContext("2d");
+  const grad = x.createLinearGradient(0, 0, 900, 500);
+  grad.addColorStop(0, "#131a28"); grad.addColorStop(1, "#2a1503");
+  x.fillStyle = grad; x.fillRect(0, 0, 900, 500);
+  x.strokeStyle = "#ff6600"; x.lineWidth = 10; x.strokeRect(10, 10, 880, 480);
+  x.textAlign = "center";
+  x.font = "900 44px Arial"; x.fillStyle = "#ff6600";
+  x.fillText(h.type === "STH" ? "💎 SUPER TREASURE HUNT" : h.type === "TH" ? "🔥 TREASURE HUNT" : "🚗 HALLAZGO", 450, 90);
+  x.font = "900 40px Arial"; x.fillStyle = "#ffffff";
+  x.fillText(h.model, 450, 170);
+  x.font = "700 26px Arial"; x.fillStyle = "#8b98ab";
+  x.fillText(`${h.date} · ${h.place}`, 450, 220);
+  x.font = "900 34px Arial"; x.fillStyle = "#2ecc71";
+  const gain = h.status === "vendido" && h.sell > 0 ? `Comprado ${fmtCLP(h.buy)} → Vendido ${fmtCLP(h.sell)} (+${Math.round(((h.sell - h.buy) / h.buy) * 100)}%)` : `Comprado a ${fmtCLP(h.buy)}`;
+  x.fillText(gain, 450, 300);
+  x.font = "700 24px Arial"; x.fillStyle = "#4d9fff";
+  x.fillText("🔥 Hot Wheels Hunter Chile", 450, 430);
+  c.toBlob(async (blob) => {
+    const file = new File([blob], "hallazgo.png", { type: "image/png" });
+    if (navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: "Mi hallazgo Hot Wheels" }); } catch { /* cancelado */ }
+    } else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "hallazgo.png"; a.click();
+      URL.revokeObjectURL(a.href);
+      toast("📤 Imagen descargada");
+    }
+  });
+}
+
+/* ================================================================
+   PWA + INIT
+================================================================ */
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) stopCamera(); });
+
+renderDB();
+renderAlerts();
+renderChecklist();
+renderHunts();
+renderStats();
+</script>
+</body>
+</html>
