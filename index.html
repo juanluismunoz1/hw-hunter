@@ -153,19 +153,15 @@ body.light .tabbar{background:rgba(255,255,255,.94)}
 }
 body.light .scan-hero{background:linear-gradient(135deg,#fff1e6,#eef2fa)}
 .scan-hero h2{font-size:20px;margin-bottom:6px}
-.camera-box{
-  position:relative;border-radius:var(--radius);overflow:hidden;background:#000;
-  aspect-ratio:4/3;display:none;margin-bottom:12px;border:2px solid var(--accent);
-}
-.camera-box.on{display:block}
-.camera-box video{width:100%;height:100%;object-fit:cover}
-.scan-line{
-  position:absolute;left:8%;right:8%;height:3px;background:linear-gradient(90deg,transparent,var(--accent),transparent);
-  box-shadow:0 0 14px var(--accent);animation:scanmove 1.8s ease-in-out infinite;top:15%;
-}
-@keyframes scanmove{0%,100%{top:15%}50%{top:82%}}
-.scan-corners{position:absolute;inset:12%;border:3px solid rgba(255,102,0,.65);border-radius:14px;pointer-events:none}
-.scan-status{font-size:13px;color:var(--muted);margin:8px 0;min-height:18px}
+.scan-live{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.scan-hit{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1.5px solid var(--border);border-radius:12px;background:var(--bg2);cursor:pointer;text-align:left;width:100%;transition:border-color .15s}
+.scan-hit:hover{border-color:var(--accent)}
+.scan-hit .sh-info{flex:1;min-width:0}
+.scan-hit .sh-info b{display:block;font-size:13.5px}
+.scan-hit .sh-info span{font-size:11px;color:var(--muted)}
+.scan-thumb{width:58px;height:30px;flex:0 0 58px}
+.scan-thumb svg,.scan-thumb img{width:100%;height:100%;object-fit:contain}
+.scan-none{padding:12px;border:1.5px dashed var(--border);border-radius:12px;font-size:13px;color:var(--muted);text-align:center}
 .result-card{border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--border);background:var(--card);margin-top:14px}
 .result-banner{padding:14px 16px;font-size:19px;font-weight:900;text-align:center;letter-spacing:.5px}
 .result-banner.TH{background:linear-gradient(135deg,#ff9a3d,#ff5500);color:#fff}
@@ -191,7 +187,9 @@ body.light .scan-hero{background:linear-gradient(135deg,#fff1e6,#eef2fa)}
 .db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
 .db-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s}
 .db-card:hover{transform:translateY(-3px);border-color:var(--accent)}
-.db-thumb{padding:14px 10px 6px;background:radial-gradient(circle at 50% 65%,var(--card3),var(--card2))}
+.db-thumb{padding:10px;height:96px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 65%,var(--card3),var(--card2))}
+.db-thumb svg{width:100%}
+.db-photo{width:100%;height:100%;object-fit:contain;background:#fff}
 .db-info{padding:10px 12px 13px}
 .db-info h4{font-size:13.5px;margin:6px 0 3px;line-height:1.3}
 .db-info .meta{font-size:11px;color:var(--muted)}
@@ -336,27 +334,16 @@ body.light .scan-hero{background:linear-gradient(135deg,#fff1e6,#eef2fa)}
 <!-- ==================== SECCIÓN 1: SCANNER ==================== -->
 <section id="sec-scanner" class="section active">
   <div class="scan-hero">
-    <h2>📷 Hunter Scanner</h2>
-    <p class="muted small">Escanea el código de barras del blister o busca por nombre / Toy # para saber al instante si es Regular, TH o STH.</p>
+    <h2>🔍 Hunter Scanner</h2>
+    <p class="muted small">Busca por <b>nombre</b> o por el <b>SKU/Toy #</b> impreso en el reverso del blister (formato <b>JJM09-N7C5</b>) para saber al instante si es Regular, TH o STH.</p>
+    <p class="muted small" style="margin-top:8px">⚠️ El código de barras (UPC) <b>no identifica el modelo</b>: todos los autos de un case comparten el mismo UPC. Lo correcto es buscar por nombre o por el SKU/Toy #.</p>
   </div>
 
   <div class="card">
-    <div class="camera-box" id="cameraBox">
-      <video id="camVideo" playsinline muted></video>
-      <div class="scan-corners"></div>
-      <div class="scan-line"></div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" id="btnCamStart">📸 Abrir cámara</button>
-      <button class="btn btn-ghost hidden" id="btnCamStop">⏹ Detener</button>
-    </div>
-    <p class="scan-status" id="scanStatus"></p>
-    <p class="kbd-note">Tip: apunta al código de barras de la parte trasera del blister. Requiere HTTPS o localhost.</p>
-  </div>
-
-  <div class="card">
-    <h3>⌨️ Búsqueda manual</h3>
-    <input class="search-input" id="scanManual" placeholder="UPC, Toy # o nombre del auto… ej: Audi Quattro" autocomplete="off">
+    <h3>⌨️ Búsqueda por nombre o Toy #</h3>
+    <input class="search-input" id="scanManual" placeholder="Nombre, Toy # o SKU… ej: Audi Quattro, JBC20, jjm09" autocomplete="off">
+    <div id="scanLive"></div>
+    <p class="kbd-note">El prefijo del SKU (antes del guion) identifica el año: JJM=2026 · JBC=2025 · HTF=2024 · HKK=2023 · HCX=2022 · GTC=2021 · GHD=2020 · FYG=2019.</p>
   </div>
 
   <div class="card">
@@ -385,7 +372,7 @@ body.light .scan-hero{background:linear-gradient(135deg,#fff1e6,#eef2fa)}
 <!-- ==================== SECCIÓN 2: DATABASE ==================== -->
 <section id="sec-db" class="section">
   <h1 class="section-title">📚 Enciclopedia TH / STH</h1>
-  <p class="section-sub">Base de datos de Treasure Hunts, Super Treasure Hunts y variantes de colección. <b>Datos de demostración referenciales — verifica siempre el precio real en MercadoLibre antes de comprar.</b></p>
+  <p class="section-sub">Listas TH/STH oficiales por case (A–Q) y básicos del póster 2025/2026. <b>Los precios son referenciales — verifica siempre en MercadoLibre antes de comprar.</b></p>
 
   <input class="search-input" id="dbSearch" placeholder="Buscar por nombre, marca, Toy #…" autocomplete="off">
   <div class="chips" id="dbYearChips" style="margin-top:10px"></div>
@@ -504,6 +491,7 @@ body.light .scan-hero{background:linear-gradient(135deg,#fff1e6,#eef2fa)}
       <li><b>Letra final</b> = línea/planta.</li>
     </ul>
     <p class="muted small">Sirve para saber de qué lote salió un auto: si encontraste un TH del case actual en una tienda, revisa que los demás tengan base codes cercanos → el case se repuso recién y pueden quedar más piezas del mismo lote.</p>
+    <p class="small">📦 El código SKU del blister (reverso, junto al código de barras) tiene formato <span class="basecode">JJM09-N7C5</span>: el prefijo antes del guion identifica el año (JJM=2026, JBC=2025, HTF=2024, HKK=2023, HCX=2022, GTC=2021, GHD=2020, FYG=2019). Ojo: el código de barras (UPC) <b>NO sirve</b> — todos los autos de un case comparten el mismo.</p>
   </div>
 
   <div class="card edu-card guide-block">
@@ -778,6 +766,12 @@ function carSVG(hex, type, id) {
   </svg>`;
 }
 
+/* Foto real del modelo si existe (m.img); si no, la ilustración SVG */
+function photoHTML(m, svgId) {
+  if (m.img) return `<img class="db-photo" loading="lazy" src="${esc(m.img)}" alt="" onerror="this.outerHTML=carSVG('${m.hex}','${m.type}','${svgId}')">`;
+  return carSVG(m.hex, m.type, svgId);
+}
+
 function signsFor(type, extra) {
   const base = {
     TH: ["Llama 🔥 en la carrocería o impresa detrás del auto en el blister",
@@ -809,26 +803,45 @@ const TYPE_LABEL = { TH: "🔥 TH", STH: "💎 STH", REG: "⚪ Regular", ZAMAC: 
    kase (case), upc (demo), retail CLP, min/max reventa CLP, usd [min,max], diff 1-5, notes */
 const DB = [
   /* ===== 2026 ===== */
-  { id: "th26-escort", name: "'70 Ford Escort RS1600", brand: "Ford", year: 2026, series: "Mainline · HW Race Day", type: "TH", color: "Blanco", hex: "#e9edf1", toy: "JBC21", kase: "B", upc: "194735260201", retail: 5490, min: 18000, max: 28000, usd: [15, 25], diff: 3, notes: "Clásico de rally, altamente buscado por coleccionistas de Ford en Chile." },
-  { id: "th26-nova", name: "'68 Chevy Nova", brand: "Chevrolet", year: 2026, series: "Mainline · HW Muscle Mania", type: "TH", color: "Burdeo", hex: "#7a1f2b", toy: "JBC45", kase: "C", upc: "194735260218", retail: 5490, min: 15000, max: 25000, usd: [12, 20], diff: 3, notes: "Muscle clásico; la llama va en el costado trasero." },
-  { id: "th26-prelude", name: "Honda Prelude", brand: "Honda", year: 2026, series: "Mainline · HW J-Imports", type: "TH", color: "Amarillo", hex: "#f2c200", toy: "JBC63", kase: "D", upc: "194735260225", retail: 5490, min: 15000, max: 22000, usd: [12, 18], diff: 3, notes: "" },
-  { id: "th26-belair", name: "'57 Chevy Bel Air", brand: "Chevrolet", year: 2026, series: "Mainline · HW Rod Squad", type: "TH", color: "Turquesa", hex: "#27b3b8", toy: "JBC77", kase: "E", upc: "194735260232", retail: 5490, min: 14000, max: 20000, usd: [10, 17], diff: 2, notes: "" },
-  { id: "th26-silvia", name: "Nissan Silvia (S15)", brand: "Nissan", year: 2026, series: "Mainline · HW Drift", type: "TH", color: "Celeste", hex: "#7cc4e8", toy: "JBC92", kase: "F", upc: "194735260249", retail: 5490, min: 18000, max: 26000, usd: [14, 22], diff: 4, notes: "Los JDM TH se venden muy rápido en grupos chilenos." },
-  { id: "sth26-r34", name: "Nissan Skyline GT-R (BNR34)", brand: "Nissan", year: 2026, series: "Mainline · HW J-Imports", type: "STH", color: "Spectraflame azul", hex: "#1b5fd9", toy: "JBC10", kase: "A", upc: "194735260256", retail: 5490, min: 70000, max: 110000, usd: [70, 110], diff: 5, notes: "El STH más buscado del año. Spectraflame azul + Real Riders. Si lo ves a retail: compra inmediata." },
-  { id: "sth26-countach", name: "Lamborghini Countach LP5000 QV", brand: "Lamborghini", year: 2026, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame verde", hex: "#00a651", toy: "JBC33", kase: "C", upc: "194735260263", retail: 5490, min: 60000, max: 90000, usd: [60, 90], diff: 5, notes: "" },
+  /* — TH 2026 oficiales (hwtreasure.com) — */
+  { id: "th26-regalgnx", name: "'87 Buick Regal GNX", brand: "Buick", year: 2026, series: "Mainline · Nightspeed", type: "TH", color: "Negro", hex: "#24262b", toy: "JJM00", kase: "A", upc: "", retail: 5490, min: 16000, max: 26000, usd: [14, 22], diff: 4, notes: "TH oficial del case A — Nightspeed 1/10." },
+  { id: "th26-viper", name: "'92 Dodge Viper RT/10", brand: "Dodge", year: 2026, series: "Mainline · Drop Tops", type: "TH", color: "Rojo", hex: "#c62828", toy: "JJM01", kase: "B", upc: "", retail: 5490, min: 18000, max: 28000, usd: [16, 25], diff: 4, notes: "" },
+  { id: "th26-electrosil", name: "Electro Silhouette", brand: "Hot Wheels", year: 2026, series: "Mainline · HW EV", type: "TH", color: "Verde", hex: "#00a651", toy: "JJM02", kase: "C", upc: "", retail: 5490, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th26-hotwheengs", name: "Hot Wheengs", brand: "Hot Wheels", year: 2026, series: "Mainline · X-Raycers", type: "TH", color: "Morado", hex: "#6b3fa0", toy: "JJM03", kase: "D", upc: "", retail: 5490, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th26-coneshaker", name: "Cone Shaker", brand: "Hot Wheels", year: 2026, series: "Mainline · Starting Grid", type: "TH", color: "Naranjo", hex: "#ff7518", toy: "JJM04", kase: "E", upc: "", retail: 5490, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th26-gtrace", name: "2016 Ford GT Race", brand: "Ford", year: 2026, series: "Mainline · Exoticars", type: "TH", color: "Azul", hex: "#2952a3", toy: "JJM05", kase: "F", upc: "", retail: 5490, min: 18000, max: 28000, usd: [16, 25], diff: 4, notes: "" },
+  { id: "th26-2jetz", name: "2 Jet Z", brand: "Hot Wheels", year: 2026, series: "Mainline · Dream Garage", type: "TH", color: "Plata", hex: "#b9c2cc", toy: "JJM06", kase: "G", upc: "", retail: 5490, min: 16000, max: 25000, usd: [14, 22], diff: 3, notes: "" },
+  { id: "th26-totaldisposal", name: "Total Disposal", brand: "Hot Wheels", year: 2026, series: "Mainline · Heavyweights", type: "TH", color: "Verde", hex: "#33691e", toy: "JJM07", kase: "H", upc: "", retail: 5490, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th26-amarugtc", name: "Amaru GTC", brand: "Hot Wheels", year: 2026, series: "Mainline · HW Mods", type: "TH", color: "Rojo", hex: "#c22f2f", toy: "JJM08", kase: "J", upc: "", retail: 5490, min: 15000, max: 23000, usd: [13, 20], diff: 3, notes: "" },
+  { id: "th26-sweetdriver", name: "Sweet Driver", brand: "Hot Wheels", year: 2026, series: "Mainline · Sweet Rides", type: "TH", color: "Rosa", hex: "#e91e63", toy: "JJM09", kase: "K", upc: "", retail: 5490, min: 14000, max: 22000, usd: [12, 18], diff: 3, notes: "" },
+  { id: "th26-madmanga", name: "Mad Manga", brand: "Hot Wheels", year: 2026, series: "Mainline · Let's Race", type: "TH", color: "Amarillo", hex: "#f2c200", toy: "JJM10", kase: "L", upc: "", retail: 5490, min: 16000, max: 26000, usd: [14, 22], diff: 3, notes: "TH del case L — casting anime fan-favorite." },
+  { id: "th26-modela31", name: "Ford Model A Custom '31", brand: "Ford", year: 2026, series: "Mainline · Rod Squad", type: "TH", color: "Burdeo", hex: "#7a1f2b", toy: "JJM11", kase: "M", upc: "", retail: 5490, min: 16000, max: 25000, usd: [14, 21], diff: 3, notes: "No confundir con el Model A '31 REG de 2025 (Dirt): ese es otro entry y se queda REG." },
+  { id: "th26-fastfish", name: "Fast Fish", brand: "Hot Wheels", year: 2026, series: "Mainline · Team Wheels", type: "TH", color: "Azul", hex: "#1e88e5", toy: "JJM12", kase: "N", upc: "", retail: 5490, min: 14000, max: 22000, usd: [12, 18], diff: 3, notes: "" },
+  { id: "th26-skylineht", name: "Nissan Skyline HT 2000GT-X", brand: "Nissan", year: 2026, series: "Mainline · Screen Time", type: "TH", color: "Plata", hex: "#b9c2cc", toy: "JJM13", kase: "P", upc: "", retail: 5490, min: 20000, max: 30000, usd: [18, 28], diff: 4, notes: "TH JDM del case P — Screen Time 10/10." },
+  { id: "th26-gazellagt", name: "Gazella GT", brand: "Hot Wheels", year: 2026, series: "Mainline · Trophy Case", type: "TH", color: "Verde", hex: "#00a651", toy: "JJM14", kase: "Q", upc: "", retail: 5490, min: 14000, max: 22000, usd: [12, 18], diff: 3, notes: "" },
+  /* — STH 2026 oficiales (hwtreasure.com) — */
+  { id: "sth26-driftender", name: "Drift-Ender", brand: "Hot Wheels", year: 2026, series: "Mainline · Truckin' Along", type: "STH", color: "Spectraflame naranjo", hex: "#ff7518", toy: "JJM15", kase: "A", upc: "", retail: 5490, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "STH oficial del case A — Truckin' Along 1/5." },
+  { id: "sth26-sierra", name: "'87 Ford Sierra Cosworth", brand: "Ford", year: 2026, series: "Mainline · HW Euro", type: "STH", color: "Spectraflame blanco", hex: "#e8ecef", toy: "JJM19", kase: "E", upc: "", retail: 5490, min: 55000, max: 90000, usd: [55, 90], diff: 5, notes: "" },
+  { id: "sth26-otto", name: "Custom Otto", brand: "Hot Wheels", year: 2026, series: "Mainline · Mattel", type: "STH", color: "Spectraflame azul", hex: "#1b5fd9", toy: "JJM21", kase: "G", upc: "", retail: 5490, min: 50000, max: 80000, usd: [50, 80], diff: 5, notes: "" },
+  { id: "sth26-supra", name: "'94 Toyota Supra", brand: "Toyota", year: 2026, series: "Mainline · Tooned", type: "STH", color: "Spectraflame naranjo", hex: "#ef6c00", toy: "JJM25", kase: "K", upc: "", retail: 5490, min: 80000, max: 120000, usd: [80, 110], diff: 5, notes: "STH del case K — Tooned 5/5. Supra = alta demanda." },
 
   /* ===== 2025 ===== */
-  { id: "th25-quattro", name: "'87 Audi Quattro", brand: "Audi", year: 2025, series: "Mainline · HW Turbo", type: "TH", color: "Blanco", hex: "#f0f2f4", toy: "HYY14", kase: "B", upc: "194735250114", retail: 4990, min: 20000, max: 30000, usd: [18, 28], diff: 4, notes: "Leyenda del rally Grupo B. Muy cotizado en Chile; la llama va detrás del auto en el blister." },
-  { id: "th25-510", name: "'71 Datsun 510", brand: "Datsun", year: 2025, series: "Mainline · HW J-Imports", type: "TH", color: "Celeste", hex: "#8fd0f0", toy: "HYY02", kase: "A", upc: "194735250121", retail: 4990, min: 18000, max: 28000, usd: [15, 24], diff: 4, notes: "El '510' es de los JDM clásicos más líquidos para revender." },
-  { id: "th25-elcamino", name: "Custom '71 El Camino", brand: "Chevrolet", year: 2025, series: "Mainline · HW Muscle Mania", type: "TH", color: "Morado", hex: "#6b3fa0", toy: "HYY27", kase: "C", upc: "194735250138", retail: 4990, min: 15000, max: 25000, usd: [12, 20], diff: 3, notes: "" },
-  { id: "th25-rx7", name: "'95 Mazda RX-7", brand: "Mazda", year: 2025, series: "Mainline · HW J-Imports", type: "TH", color: "Amarillo", hex: "#f5c518", toy: "HYY31", kase: "D", upc: "194735250145", retail: 4990, min: 20000, max: 32000, usd: [18, 28], diff: 4, notes: "RX-7 amarillo: uno de los TH 2025 más pedidos. Se revende en horas en MercadoLibre." },
-  { id: "th25-nova", name: "'68 Chevy Nova", brand: "Chevrolet", year: 2025, series: "Mainline · HW Muscle Mania", type: "TH", color: "Naranjo", hex: "#e8722a", toy: "HYY48", kase: "E", upc: "194735250152", retail: 4990, min: 14000, max: 22000, usd: [11, 18], diff: 3, notes: "" },
-  { id: "th25-gt40", name: "Ford GT-40", brand: "Ford", year: 2025, series: "Mainline · HW Race Day", type: "TH", color: "Azul Golfo", hex: "#3d7dd8", toy: "HYY55", kase: "F", upc: "194735250169", retail: 4990, min: 18000, max: 26000, usd: [14, 22], diff: 4, notes: "" },
-  { id: "th25-datsun620", name: "Datsun 620", brand: "Datsun", year: 2025, series: "Mainline · HW Hot Trucks", type: "TH", color: "Rojo", hex: "#c22f2f", toy: "HYY66", kase: "G", upc: "194735250176", retail: 4990, min: 15000, max: 23000, usd: [12, 19], diff: 3, notes: "" },
-  { id: "th25-firebird", name: "'77 Pontiac Firebird", brand: "Pontiac", year: 2025, series: "Mainline · HW Muscle Mania", type: "TH", color: "Negro", hex: "#24262b", toy: "HYY79", kase: "H", upc: "194735250183", retail: 4990, min: 15000, max: 24000, usd: [12, 20], diff: 3, notes: "" },
-  { id: "sth25-porsche", name: "Porsche 911 GT3 RS", brand: "Porsche", year: 2025, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame azul", hex: "#1565c0", toy: "HYY05", kase: "A", upc: "194735250190", retail: 4990, min: 60000, max: 95000, usd: [60, 95], diff: 5, notes: "Porsche + STH = los más líquidos del mercado. Verifica Real Riders y base de metal." },
-  { id: "sth25-p1", name: "McLaren P1", brand: "McLaren", year: 2025, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame naranjo", hex: "#ff7518", toy: "HYY19", kase: "C", upc: "194735250206", retail: 4990, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "" },
-  { id: "sth25-camaro", name: "'69 Chevy Camaro", brand: "Chevrolet", year: 2025, series: "Mainline · HW Muscle Mania", type: "STH", color: "Spectraflame rojo", hex: "#b71c1c", toy: "HYY41", kase: "E", upc: "194735250213", retail: 4990, min: 50000, max: 80000, usd: [50, 80], diff: 5, notes: "Clásico americano con gran demanda local." },
+  /* — TH 2025 oficiales (hwtreasure.com) — */
+  { id: "th25-fishdchipd", name: "Fish'd & Chip'd", brand: "Hot Wheels", year: 2025, series: "Mainline · Designed By", type: "TH", color: "Azul", hex: "#2952a3", toy: "JBC21", kase: "B", upc: "", retail: 4990, min: 14000, max: 22000, usd: [12, 18], diff: 3, notes: "" },
+  { id: "th25-mailedit", name: "Mailed It!", brand: "Hot Wheels", year: 2025, series: "Mainline · Metro", type: "TH", color: "Rojo", hex: "#c22f2f", toy: "JBC22", kase: "C", upc: "", retail: 4990, min: 14000, max: 22000, usd: [12, 18], diff: 3, notes: "" },
+  { id: "th25-pedaldriver", name: "Pedal Driver", brand: "Hot Wheels", year: 2025, series: "Mainline · Ride-Ons", type: "TH", color: "Verde", hex: "#2e7d46", toy: "JBC23", kase: "D", upc: "", retail: 4990, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th25-rigstorm", name: "Rig Storm", brand: "Hot Wheels", year: 2025, series: "Mainline · X-Raycers", type: "TH", color: "Morado", hex: "#5e35b1", toy: "JBC24", kase: "E", upc: "", retail: 4990, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th25-cityturbo", name: "'85 Honda City Turbo II", brand: "Honda", year: 2025, series: "Mainline · J-Imports", type: "TH", color: "Blanco", hex: "#eceff1", toy: "JBC25", kase: "F", upc: "", retail: 4990, min: 18000, max: 28000, usd: [16, 25], diff: 4, notes: "TH JDM del case F — J-Imports 5/5." },
+  { id: "th25-birthdayburner", name: "Birthday Burner", brand: "Hot Wheels", year: 2025, series: "Mainline · Celebration Racers", type: "TH", color: "Turquesa", hex: "#26c6da", toy: "JBC26", kase: "G", upc: "", retail: 4990, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th25-chillmill", name: "Chill Mill", brand: "Hot Wheels", year: 2025, series: "Mainline · Fast Foodie", type: "TH", color: "Celeste", hex: "#7cc4e8", toy: "JBC28", kase: "H", upc: "", retail: 4990, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th25-leafnismo", name: "Nissan Leaf NISMO RC_02", brand: "Nissan", year: 2025, series: "Mainline · HW EV", type: "TH", color: "Naranjo", hex: "#ef6c00", toy: "JBC27", kase: "J", upc: "", retail: 4990, min: 15000, max: 23000, usd: [13, 20], diff: 3, notes: "" },
+  { id: "th25-chevroletor", name: "Chevroletor", brand: "Chevrolet", year: 2025, series: "Mainline · Track Aces", type: "TH", color: "Rojo", hex: "#c62828", toy: "JBC29", kase: "K", upc: "", retail: 4990, min: 14000, max: 22000, usd: [12, 18], diff: 3, notes: "" },
+  { id: "th25-sharkbite", name: "Shark Bite", brand: "Hot Wheels", year: 2025, series: "Mainline · Experimotors", type: "TH", color: "Azul", hex: "#2952a3", toy: "JBC31", kase: "M", upc: "", retail: 4990, min: 14000, max: 22000, usd: [12, 17], diff: 2, notes: "" },
+  { id: "th25-triumphtiger", name: "1966 Triumph Tiger 100", brand: "Triumph", year: 2025, series: "Mainline · Moto", type: "TH", color: "Burdeo", hex: "#7a1f2b", toy: "JBC32", kase: "N", upc: "", retail: 4990, min: 16000, max: 24000, usd: [14, 21], diff: 3, notes: "TH del case N — Moto 5/5." },
+  /* — STH 2025 oficiales (hwtreasure.com, falta Mix E) — */
+  { id: "sth25-hiroller", name: "Hi-Roller II", brand: "Hot Wheels", year: 2025, series: "Mainline · Art Cars", type: "STH", color: "Spectraflame dorado", hex: "#c9a227", toy: "JBC37", kase: "C", upc: "", retail: 4990, min: 50000, max: 80000, usd: [50, 80], diff: 5, notes: "" },
+  { id: "sth25-m3wagon", name: "BMW M3 Wagon", brand: "BMW", year: 2025, series: "Mainline · Wagons", type: "STH", color: "Spectraflame azul", hex: "#1b5fd9", toy: "JBC48", kase: "P", upc: "", retail: 4990, min: 70000, max: 105000, usd: [70, 105], diff: 5, notes: "STH del case P — Wagons 5/5." },
+  { id: "sth25-rs200", name: "Ford RS200", brand: "Ford", year: 2025, series: "Mainline · Peak Pursuit", type: "STH", color: "Spectraflame azul", hex: "#1565c0", toy: "JBC49", kase: "Q", upc: "", retail: 4990, min: 60000, max: 95000, usd: [60, 95], diff: 5, notes: "STH del case Q — Peak Pursuit 9/10." },
 
   /* ===== 2024 ===== */
   { id: "th24-rx3", name: "Mazda RX-3", brand: "Mazda", year: 2024, series: "Mainline · HW J-Imports", type: "TH", color: "Verde", hex: "#2e7d46", toy: "HTC08", kase: "B", upc: "194735240081", retail: 4990, min: 16000, max: 25000, usd: [13, 21], diff: 4, notes: "" },
@@ -865,10 +878,279 @@ const DB = [
   { id: "re25-camaro", name: "'69 Camaro Red Edition", brand: "Chevrolet", year: 2025, series: "Red Edition (Target)", type: "REDED", color: "Rojo", hex: "#d32f2f", toy: "HYR12", kase: "—", upc: "194735250237", retail: 5490, min: 20000, max: 35000, usd: [18, 30], diff: 4, notes: "⚠️ Sin llama: no es TH. Aun así tiene buena reventa por ser exclusivo." },
   { id: "id24-tesla", name: "Tesla Model S Plaid id Chase", brand: "Tesla", year: 2024, series: "Hot Wheels id", type: "ID", color: "Spectraflame plata", hex: "#90a4ae", toy: "HBG00", kase: "—", upc: "194735240210", retail: 9990, min: 30000, max: 50000, usd: [25, 45], diff: 4, notes: "⚠️ Tiene Spectraflame y rines de goma, pero es de la línea id (con chip NFC), no un STH mainline." },
   { id: "ch25-laurel", name: "Nissan Laurel 2000 SGX Chase", brand: "Nissan", year: 2025, series: "Car Culture · Chase 0/5", type: "CHASE", color: "Negro", hex: "#212121", toy: "HRV88", kase: "—", upc: "194735250244", retail: 9990, min: 40000, max: 70000, usd: [35, 60], diff: 5, notes: "Chase premium marcado 0/5 en la tarjeta. Nivel STH de dificultad." },
-  { id: "th26-f40", name: "Ferrari F40", brand: "Ferrari", year: 2026, series: "Mainline · HW Exotics", type: "STH", color: "Spectraflame rosso", hex: "#d50000", toy: "JBD05", kase: "H", upc: "194735260270", retail: 5490, min: 80000, max: 120000, usd: [80, 120], diff: 5, notes: "Si Mattel lo confirma como STH, será EL santo grial del año." },
-  { id: "th26-pajero", name: "Mitsubishi Pajero Evolution", brand: "Mitsubishi", year: 2026, series: "Mainline · HW Rally", type: "TH", color: "Blanco rally", hex: "#eceff1", toy: "JBD18", kase: "G", upc: "194735260287", retail: 5490, min: 17000, max: 26000, usd: [14, 22], diff: 4, notes: "El Pajero Dakar tiene fanaticada propia en Chile." },
-  { id: "th25-ranchero", name: "'72 Ford Ranchero", brand: "Ford", year: 2025, series: "Mainline · HW Hot Trucks", type: "TH", color: "Verde lima", hex: "#9ccc65", toy: "HYY84", kase: "J", upc: "194735250251", retail: 4990, min: 14000, max: 21000, usd: [11, 17], diff: 3, notes: "" },
-  { id: "th24-miata", name: "'90 Mazda MX-5 Miata", brand: "Mazda", year: 2024, series: "Mainline · HW Roadsters", type: "TH", color: "Rojo clásico", hex: "#c62828", toy: "HTC92", kase: "L", upc: "194735240227", retail: 4990, min: 15000, max: 23000, usd: [12, 19], diff: 3, notes: "" }
+  { id: "th24-miata", name: "'90 Mazda MX-5 Miata", brand: "Mazda", year: 2024, series: "Mainline · HW Roadsters", type: "TH", color: "Rojo clásico", hex: "#c62828", toy: "HTC92", kase: "L", upc: "194735240227", retail: 4990, min: 15000, max: 23000, usd: [12, 19], diff: 3, notes: "" },
+
+  /* ===== Mainline 2026 — básicos (REG) ===== */
+  /* ===== Mainline 2025 — series faltantes (Peak Pursuit · HW Moto · Track Aces · Muscle Mania · Celebration Racers) ===== */
+  { id: "reg25-peakpursuit-czinger-21c", name: "Czinger 21C", brand: "Czinger", year: 2025, series: "Mainline · Peak Pursuit", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 8000, max: 14000, usd: [5, 8], diff: 2, notes: "" },
+  { id: "reg25-peakpursuit-audi-90-quattro", name: "Audi 90 quattro", brand: "Audi", year: 2025, series: "Mainline · Peak Pursuit", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 7000, max: 12000, usd: [4, 7], diff: 2, notes: "" },
+  { id: "reg25-peakpursuit-vw-t3-custom", name: "VW T3 Custom", brand: "Volkswagen", year: 2025, series: "Mainline · Peak Pursuit", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 8000, max: 13000, usd: [5, 8], diff: 2, notes: "" },
+  { id: "reg25-peakpursuit-pagani-utopia", name: "Pagani Utopia", brand: "Pagani", year: 2025, series: "Mainline · Peak Pursuit", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 15000, usd: [5, 8], diff: 2, notes: "" },
+  { id: "reg25-peakpursuit-mazda-787b", name: "Mazda 787B", brand: "Mazda", year: 2025, series: "Mainline · Peak Pursuit", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 15000, usd: [5, 8], diff: 2, notes: "" },
+  { id: "reg25-peakpursuit-mcmurtry-speirling", name: "McMurtry Spéirling", brand: "McMurtry", year: 2025, series: "Mainline · Peak Pursuit", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 8000, max: 13000, usd: [5, 8], diff: 2, notes: "" },
+  { id: "reg25-peakpursuit-mazda-rx-3", name: "Mazda RX-3", brand: "Mazda", year: 2025, series: "Mainline · Peak Pursuit", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 8000, max: 14000, usd: [5, 8], diff: 2, notes: "" },
+  { id: "reg25-moto-honda-cb750-cafe", name: "Honda CB750 Cafe", brand: "Honda", year: 2025, series: "Mainline · HW Moto", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 7000, max: 12000, usd: [4, 7], diff: 2, notes: "" },
+  { id: "reg25-moto-vespa-90-ss", name: "Vespa 90 SS Super Sprint (1966)", brand: "Vespa", year: 2025, series: "Mainline · HW Moto", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 6000, max: 10000, usd: [3, 6], diff: 1, notes: "" },
+  { id: "reg25-moto-honda-motocompo", name: "Honda Motocompo", brand: "Honda", year: 2025, series: "Mainline · HW Moto", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 8000, max: 13000, usd: [5, 8], diff: 2, notes: "" },
+  { id: "reg25-moto-honda-vfr750r", name: "Honda VFR750R (RC30)", brand: "Honda", year: 2025, series: "Mainline · HW Moto", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 8000, max: 14000, usd: [5, 8], diff: 2, notes: "" },
+  { id: "reg25-trackaces-formula-e-gen3", name: "Formula E Gen3", brand: "Formula E", year: 2025, series: "Mainline · Track Aces", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 6000, max: 9000, usd: [3, 5], diff: 1, notes: "" },
+  { id: "reg25-musclemania-king-kuda", name: "King Kuda", brand: "Plymouth", year: 2025, series: "Mainline · Muscle Mania", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 7000, max: 11000, usd: [4, 6], diff: 2, notes: "" },
+  { id: "reg25-celebrationracers-69-corvette-racer", name: "'69 Corvette Racer", brand: "Chevrolet", year: 2025, series: "Mainline · HW Celebration Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 7000, max: 12000, usd: [4, 7], diff: 2, notes: "" },
+  { id: "reg25-celebrationracers-custom-56-ford-truck", name: "Custom '56 Ford Truck", brand: "Ford", year: 2025, series: "Mainline · HW Celebration Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 7000, max: 11000, usd: [4, 6], diff: 2, notes: "" },
+  { id: "reg26-jimports-toyota-prius-custom", name: "Toyota Prius Custom", brand: "Toyota", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-jimports-mazda-rx-7", name: "Mazda RX-7", brand: "Mazda", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-jimports-nissan-skyline-2000-gt-r", name: "Nissan Skyline 2000 GT-R", brand: "Nissan", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-jimports-1985-honda-cr-x", name: "1985 Honda CR-X", brand: "Honda", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-jimports-89-mazda-savanna-rx-7-fc3s", name: "'89 Mazda Savanna RX-7 FC3S", brand: "Mazda", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-jimports-honda-odyssey", name: "Honda Odyssey", brand: "Honda", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth26-impreza", name: "Subaru Impreza", brand: "Subaru", year: 2026, series: "Mainline · HW J-Imports", type: "STH", color: "Spectraflame azul", hex: "#1b5fd9", toy: "JJM22", kase: "J", upc: "", retail: 5490, min: 60000, max: 90000, usd: [60, 90], diff: 5, notes: "STH oficial 2026 del case J — J-Imports 7/10." },
+  { id: "reg26-jimports-88-mitsubishi-starion", name: "'88 Mitsubishi Starion", brand: "Mitsubishi", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-jimports-toyota-ae86-sprinter-trueno", name: "Toyota AE86 Sprinter Trueno", brand: "Toyota", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-jimports-nissan-skyline-gt-r-bnr34", name: "Nissan Skyline GT-R (BNR34)", brand: "Nissan", year: 2026, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Versión regular (no STH) del BNR34; el STH 2026 es el espectraflame." },
+  { id: "reg26-exoticars-16-lamborghini-centenario-roadster", name: "'16 Lamborghini Centenario Roadster", brand: "Lamborghini", year: 2026, series: "Mainline · Exoticars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-exoticars-gordon-murray-automotive-t-33", name: "Gordon Murray Automotive T.33", brand: "Gordon Murray Automotive", year: 2026, series: "Mainline · Exoticars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-exoticars-mcmurtry-sp-irling", name: "McMurtry Spéirling", brand: "McMurtry", year: 2026, series: "Mainline · Exoticars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-exoticars-pagani-zonda-cinque", name: "Pagani Zonda Cinque", brand: "Pagani", year: 2026, series: "Mainline · Exoticars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-exoticars-mclaren-w1", name: "McLaren W1", brand: "McLaren", year: 2026, series: "Mainline · Exoticars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-exoticars-17-pagani-huayra-roadster", name: "'17 Pagani Huayra Roadster", brand: "Pagani", year: 2026, series: "Mainline · Exoticars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-exoticars-2024-aston-martin-vantage-gt3", name: "2024 Aston Martin Vantage GT3", brand: "Aston Martin", year: 2026, series: "Mainline · Exoticars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-ferrari-ferrari-sf90-stradale", name: "Ferrari SF90 Stradale", brand: "Ferrari", year: 2026, series: "Mainline · Ferrari", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-ferrari-ferrari-365-gtb4-competizione", name: "Ferrari 365 GTB4 Competizione", brand: "Ferrari", year: 2026, series: "Mainline · Ferrari", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth26-f40competizione", name: "Ferrari F40 Competizione", brand: "Ferrari", year: 2026, series: "Mainline · Ferrari", type: "STH", color: "Spectraflame rosso", hex: "#d50000", toy: "JJM17", kase: "C", upc: "", retail: 5490, min: 80000, max: 120000, usd: [90, 110], diff: 5, notes: "STH oficial 2026 del case C — Ferrari 3/5. Santo grial del año." },
+  { id: "reg26-ferrari-dino-206-gt", name: "Dino 206 GT", brand: "Ferrari", year: 2026, series: "Mainline · Ferrari", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-ferrari-ferrari-12cilindri", name: "Ferrari 12Cilindri", brand: "Ferrari", year: 2026, series: "Mainline · Ferrari", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-thennow-austin-mini-cooper-s", name: "Austin Mini Cooper S", brand: "Austin", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-thennow-datsun-240z", name: "Datsun 240Z", brand: "Datsun", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-thennow-corvette-grand-sport", name: "Corvette Grand Sport", brand: "Chevrolet", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-thennow-96-porsche-carrera", name: "'96 Porsche Carrera", brand: "Porsche", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-thennow-2023-nissan-z", name: "2023 Nissan Z", brand: "Nissan", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-thennow-20-toyota-gr-supra", name: "'20 Toyota GR Supra", brand: "Toyota", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-thennow-11-corvette-grand-sport", name: "'11 Corvette Grand Sport", brand: "Chevrolet", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-thennow-82-toyota-supra", name: "'82 Toyota Supra", brand: "Toyota", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth26-carrerars", name: "Porsche 911 Carrera RS 2.7", brand: "Porsche", year: 2026, series: "Mainline · Then and Now", type: "STH", color: "Spectraflame naranjo", hex: "#ef6c00", toy: "JJM24", kase: "M", upc: "", retail: 5490, min: 80000, max: 120000, usd: [85, 110], diff: 5, notes: "STH oficial 2026 del case M — Then and Now 9/10." },
+  { id: "reg26-thennow-mini-jcw-electric", name: "Mini JCW Electric", brand: "MINI", year: 2026, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-factory-porsche-911-carrera-t", name: "Porsche 911 Carrera T", brand: "Porsche", year: 2026, series: "Mainline · Factory Fresh", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-factory-maserati-shamal", name: "Maserati Shamal", brand: "Maserati", year: 2026, series: "Mainline · Factory Fresh", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth26-gtd", name: "Ford Mustang GTD", brand: "Ford", year: 2026, series: "Mainline · Factory Fresh", type: "STH", color: "Spectraflame azul", hex: "#1565c0", toy: "JJM16", kase: "B", upc: "", retail: 5490, min: 75000, max: 115000, usd: [75, 110], diff: 5, notes: "STH oficial 2026 del case B — Factory Fresh 3/5." },
+  { id: "reg26-factory-custom-66-toronado", name: "Custom '66 Toronado", brand: "Oldsmobile", year: 2026, series: "Mainline · Factory Fresh", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-factory-98-honda-prelude", name: "'98 Honda Prelude", brand: "Honda", year: 2026, series: "Mainline · Factory Fresh", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-startinggrid-69-dodge-charger-daytona", name: "'69 Dodge Charger Daytona", brand: "Dodge", year: 2026, series: "Mainline · HW Starting Grid", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-startinggrid-bugatti-bolide", name: "Bugatti Bolide", brand: "Bugatti", year: 2026, series: "Mainline · HW Starting Grid", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-startinggrid-bmw-m4-gt3", name: "BMW M4 GT3", brand: "BMW", year: 2026, series: "Mainline · HW Starting Grid", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-startinggrid-renault-espace-f1", name: "Renault Espace F1", brand: "Renault", year: 2026, series: "Mainline · HW Starting Grid", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-startinggrid-maserati-tipo-61", name: "Maserati Tipo 61", brand: "Maserati", year: 2026, series: "Mainline · HW Starting Grid", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-startinggrid-ferrari-f2004", name: "Ferrari F2004", brand: "Ferrari", year: 2026, series: "Mainline · HW Starting Grid", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-euro-17-audi-rs-6-avant", name: "'17 Audi RS 6 Avant", brand: "Audi", year: 2026, series: "Mainline · HW Euro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-euro-lotus-cortina", name: "Lotus Cortina", brand: "Lotus", year: 2026, series: "Mainline · HW Euro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-euro-vw-id-buzz-bomb", name: "VW ID. Buzz Bomb", brand: "Volkswagen", year: 2026, series: "Mainline · HW Euro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-euro-morgan-super-3", name: "Morgan Super 3", brand: "Morgan", year: 2026, series: "Mainline · HW Euro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-euro-bmw-635-csi", name: "BMW 635 CSi", brand: "BMW", year: 2026, series: "Mainline · HW Euro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-euro-1983-porsche-928s", name: "1983 Porsche 928S", brand: "Porsche", year: 2026, series: "Mainline · HW Euro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-euro-mercedes-benz-cla", name: "Mercedes-Benz CLA", brand: "Mercedes-Benz", year: 2026, series: "Mainline · HW Euro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-euro-jaguar-xjc-v12-coupe", name: "Jaguar XJC V12 Coupe", brand: "Jaguar", year: 2026, series: "Mainline · HW Euro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-wagons-70-chevelle-ss-wagon", name: "'70 Chevelle SS Wagon", brand: "Chevrolet", year: 2026, series: "Mainline · Wagons", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-wagons-classic-55-nomad", name: "Classic '55 Nomad", brand: "Chevrolet", year: 2026, series: "Mainline · Wagons", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-wagons-94-audi-avant-rs2", name: "'94 Audi Avant RS2", brand: "Audi", year: 2026, series: "Mainline · Wagons", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth26-maxima", name: "Nissan Maxima Drift Car", brand: "Nissan", year: 2026, series: "Mainline · Wagons", type: "STH", color: "Spectraflame morado", hex: "#6a1b9a", toy: "JJM26", kase: "L", upc: "", retail: 5490, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "STH oficial 2026 del case L — Wagons 10/10." },
+  { id: "reg26-drag-76-chevy-chevette", name: "'76 Chevy Chevette", brand: "Chevrolet", year: 2026, series: "Mainline · Drag Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-drag-68-dodge-dart", name: "'68 Dodge Dart", brand: "Dodge", year: 2026, series: "Mainline · Drag Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-drag-64-dodge-330", name: "'64 Dodge 330", brand: "Dodge", year: 2026, series: "Mainline · Drag Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-drag-custom-72-chevy-luv", name: "Custom '72 Chevy LUV", brand: "Chevrolet", year: 2026, series: "Mainline · Drag Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth26-civiccustom", name: "Honda Civic Custom", brand: "Honda", year: 2026, series: "Mainline · Drag Racers", type: "STH", color: "Spectraflame verde", hex: "#00a651", toy: "JJM20", kase: "F", upc: "", retail: 5490, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "STH oficial 2026 del case F — Drag Racers 8/10." },
+  { id: "reg26-drag-65-mercury-comet-cyclone", name: "'65 Mercury Comet Cyclone", brand: "Mercury", year: 2026, series: "Mainline · Drag Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-drag-fiat-500c", name: "Fiat 500C", brand: "Fiat", year: 2026, series: "Mainline · Drag Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-torque-70-buick-gsx", name: "'70 Buick GSX", brand: "Buick", year: 2026, series: "Mainline · HW Torque", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-torque-68-shelby-gt500", name: "'68 Shelby GT500", brand: "Shelby", year: 2026, series: "Mainline · HW Torque", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-torque-18-camaro-ss", name: "'18 Camaro SS", brand: "Chevrolet", year: 2026, series: "Mainline · HW Torque", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-torque-96-dodge-viper-gts", name: "'96 Dodge Viper GTS", brand: "Dodge", year: 2026, series: "Mainline · HW Torque", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-torque-68-mercury-cougar", name: "'68 Mercury Cougar", brand: "Mercury", year: 2026, series: "Mainline · HW Torque", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-torque-96-chevrolet-impala-ss", name: "'96 Chevrolet Impala SS", brand: "Chevrolet", year: 2026, series: "Mainline · HW Torque", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth26-cuda", name: "'70 Plymouth AAR Cuda", brand: "Plymouth", year: 2026, series: "Mainline · HW Torque", type: "STH", color: "Spectraflame lima", hex: "#9ccc65", toy: "JJM28", kase: "P", upc: "", retail: 5490, min: 65000, max: 100000, usd: [65, 100], diff: 5, notes: "STH oficial 2026 del case P — HW Torque 9/10." },
+  { id: "reg26-compact-85-honda-city-turbo-ii", name: "'85 Honda City Turbo II", brand: "Honda", year: 2026, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-compact-mazda-rx-3", name: "Mazda RX-3", brand: "Mazda", year: 2026, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-compact-datsun-620", name: "Datsun 620", brand: "Datsun", year: 2026, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth26-elise", name: "Lotus Sport Elise", brand: "Lotus", year: 2026, series: "Mainline · Compact Kings", type: "STH", color: "Spectraflame amarillo", hex: "#f2c200", toy: "JJM23", kase: "H", upc: "", retail: 5490, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "STH oficial 2026 del case H — Compact Kings 7/10." },
+  { id: "reg26-compact-63-chevy-ii", name: "'63 Chevy II", brand: "Chevrolet", year: 2026, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-compact-19-mercedes-benz-a-class", name: "'19 Mercedes-Benz A-Class", brand: "Mercedes-Benz", year: 2026, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-compact-1972-datsun-sunny-coupe", name: "1972 Datsun Sunny Coupe", brand: "Datsun", year: 2026, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-layinlow-59-chevy-impala", name: "'59 Chevy Impala", brand: "Chevrolet", year: 2026, series: "Mainline · Layin' Low", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-layinlow-47-chevy-fleetline", name: "'47 Chevy Fleetline", brand: "Chevrolet", year: 2026, series: "Mainline · Layin' Low", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth26-impala64", name: "'64 Impala", brand: "Chevrolet", year: 2026, series: "Mainline · Layin' Low", type: "STH", color: "Spectraflame turquesa", hex: "#26c6da", toy: "JJM18", kase: "D", upc: "", retail: 5490, min: 60000, max: 95000, usd: [60, 95], diff: 5, notes: "STH oficial 2026 del case D — Layin' Low 4/5." },
+  { id: "reg26-truckin-20-jeep-gladiator", name: "'20 Jeep Gladiator", brand: "Jeep", year: 2026, series: "Mainline · Truckin' Along", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-truckin-83-chevy-silverado", name: "'83 Chevy Silverado", brand: "Chevrolet", year: 2026, series: "Mainline · Truckin' Along", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-truckin-mercedes-benz-unimog-1300l", name: "Mercedes-Benz Unimog 1300L", brand: "Mercedes-Benz", year: 2026, series: "Mainline · Truckin' Along", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-truckin-ford-f-150-lightning-supertruck", name: "Ford F-150 Lightning SuperTruck", brand: "Ford", year: 2026, series: "Mainline · Truckin' Along", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-dirt-mazda-autozam", name: "Mazda Autozam", brand: "Mazda", year: 2026, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-dirt-70-ford-escort-rs1600", name: "'70 Ford Escort RS1600", brand: "Ford", year: 2026, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "Versión regular del mismo casting del TH 2026 (HW Race Day)." },
+  { id: "reg26-dirt-21-ford-bronco", name: "'21 Ford Bronco", brand: "Ford", year: 2026, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth26-ram1500", name: "'23 Ram 1500", brand: "Ram", year: 2026, series: "Mainline · Dirt", type: "STH", color: "Spectraflame rojo", hex: "#b71c1c", toy: "JJM27", kase: "N", upc: "", retail: 5490, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "STH oficial 2026 del case N — Dirt 9/10." },
+  { id: "reg26-dirt-2019-audi-tt-safari", name: "2019 Audi TT Safari", brand: "Audi", year: 2026, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-dirt-aston-martin-db5-safari-edition", name: "Aston Martin DB5 Safari Edition", brand: "Aston Martin", year: 2026, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-coolclassics-64-lincoln-continental", name: "'64 Lincoln Continental", brand: "Lincoln", year: 2026, series: "Mainline · Cool Classics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-coolclassics-55-chevy", name: "'55 Chevy", brand: "Chevrolet", year: 2026, series: "Mainline · Cool Classics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-coolclassics-alfa-romeo-giulia-ti-super", name: "Alfa Romeo Giulia TI Super", brand: "Alfa Romeo", year: 2026, series: "Mainline · Cool Classics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-coolclassics-71-lamborghini-miura-sv", name: "'71 Lamborghini Miura SV", brand: "Lamborghini", year: 2026, series: "Mainline · Cool Classics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-coolclassics-66-buick-riviera", name: "'66 Buick Riviera", brand: "Buick", year: 2026, series: "Mainline · Cool Classics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-coolclassics-1963-ford-galaxie", name: "1963 Ford Galaxie", brand: "Ford", year: 2026, series: "Mainline · Cool Classics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth26-firebird400", name: "'67 Pontiac Firebird 400", brand: "Pontiac", year: 2026, series: "Mainline · Cool Classics", type: "STH", color: "Spectraflame rojo", hex: "#c62828", toy: "JJM29", kase: "Q", upc: "", retail: 5490, min: 60000, max: 95000, usd: [60, 95], diff: 5, notes: "STH oficial 2026 del case Q." },
+  { id: "reg26-coolclassics-porsche-908-3", name: "Porsche 908-3", brand: "Porsche", year: 2026, series: "Mainline · Cool Classics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-ev-ford-mustang-mach-e-1400", name: "Ford Mustang Mach-E 1400", brand: "Ford", year: 2026, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-ev-porsche-taycan-turbo-s", name: "Porsche Taycan Turbo S", brand: "Porsche", year: 2026, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-ev-lucid-air", name: "Lucid Air", brand: "Lucid", year: 2026, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-ev-custom-2020-honda-e", name: "Custom 2020 Honda e", brand: "Honda", year: 2026, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-ev-cadillac-celestiq", name: "Cadillac Celestiq", brand: "Cadillac", year: 2026, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-nightspeed-2020-ford-mustang-shelby-gt500", name: "2020 Ford Mustang Shelby GT500", brand: "Ford", year: 2026, series: "Mainline · Nightspeed", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-nightspeed-2018-honda-civic-type-r", name: "2018 Honda Civic Type R", brand: "Honda", year: 2026, series: "Mainline · Nightspeed", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-nightspeed-70-dodge-hemi-challenger", name: "'70 Dodge Hemi Challenger", brand: "Dodge", year: 2026, series: "Mainline · Nightspeed", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-nightspeed-cupra-e-racer", name: "Cupra e-Racer", brand: "Cupra", year: 2026, series: "Mainline · Nightspeed", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-nightspeed-16-cadillac-ats-v-r", name: "'16 Cadillac ATS-V R", brand: "Cadillac", year: 2026, series: "Mainline · Nightspeed", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-nightspeed-lb-works-lamborghini-hurac-n-coup", name: "LB-WORKS Lamborghini Huracán Coupé", brand: "Lamborghini", year: 2026, series: "Mainline · Nightspeed", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-nightspeed-corvette-c7-z06", name: "Corvette C7 Z06", brand: "Chevrolet", year: 2026, series: "Mainline · Nightspeed", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-nightspeed-20-dodge-charger-hellcat", name: "'20 Dodge Charger Hellcat", brand: "Dodge", year: 2026, series: "Mainline · Nightspeed", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-dreamgarage-mazda-mx-5-miata", name: "Mazda MX-5 Miata", brand: "Mazda", year: 2026, series: "Mainline · HW Dream Garage", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-dreamgarage-67-camaro", name: "'67 Camaro", brand: "Chevrolet", year: 2026, series: "Mainline · HW Dream Garage", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-f1-mclaren-formula-1-team", name: "McLaren Formula 1 Team", brand: "McLaren", year: 2026, series: "Mainline · Formula 1", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-f1-visa-cash-app-racing-bulls-formula-one-team", name: "Visa Cash App Racing Bulls Formula One Team", brand: "Racing Bulls", year: 2026, series: "Mainline · Formula 1", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-f1-scuderia-ferrari-hp", name: "Scuderia Ferrari HP", brand: "Ferrari", year: 2026, series: "Mainline · Formula 1", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-f1-kick-sauber-f1-team", name: "Kick Sauber F1 Team", brand: "Kick Sauber", year: 2026, series: "Mainline · Formula 1", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-f1-aston-martin-aramco-formula-one-team", name: "Aston Martin Aramco Formula One Team", brand: "Aston Martin", year: 2026, series: "Mainline · Formula 1", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-xraycers-69-chevelle", name: "'69 Chevelle", brand: "Chevrolet", year: 2026, series: "Mainline · X-Raycers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-screentime-hw-k-i-t-t-concept", name: "HW K.I.T.T. Concept", brand: "Pontiac", year: 2026, series: "Mainline · Screen Time", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-screentime-68-corvette-gas-monkey-garage", name: "'68 Corvette - Gas Monkey Garage", brand: "Chevrolet", year: 2026, series: "Mainline · Screen Time", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-screentime-1970-custom-plymouth-roadrunner", name: "1970 Custom Plymouth Roadrunner", brand: "Plymouth", year: 2026, series: "Mainline · Screen Time", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-rodsquad-33-ford-lo-boy", name: "'33 Ford Lo Boy", brand: "Ford", year: 2026, series: "Mainline · Rod Squad", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-rodsquad-41-willys", name: "'41 Willys", brand: "Willys", year: 2026, series: "Mainline · Rod Squad", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-rodsquad-custom-62-chevy-pickup", name: "Custom '62 Chevy Pickup", brand: "Chevrolet", year: 2026, series: "Mainline · Rod Squad", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-droptops-porsche-911-turbo-cabriolet", name: "Porsche 911 Turbo Cabriolet", brand: "Porsche", year: 2026, series: "Mainline · Drop Tops", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 12000, max: 22000, usd: [10, 18], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-droptops-2019-audi-r8-spyder", name: "2019 Audi R8 Spyder", brand: "Audi", year: 2026, series: "Mainline · Drop Tops", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 9000, max: 18000, usd: [8, 15], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg26-droptops-fiat-beast-of-turin", name: "Fiat Beast of Turin", brand: "Fiat", year: 2026, series: "Mainline · Drop Tops", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg26-teamwheels-1970-pontiac-firebird", name: "1970 Pontiac Firebird", brand: "Pontiac", year: 2026, series: "Mainline · Team Wheels", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 5490, min: 5490, max: 5490, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dreamgarage-mazda-mx-5-miata", name: "Mazda MX-5 Miata", brand: "Mazda", year: 2025, series: "Mainline · HW Dream Garage", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dreamgarage-mazda-autozam", name: "Mazda Autozam", brand: "Mazda", year: 2025, series: "Mainline · HW Dream Garage", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dreamgarage-aston-martin-db4gt-high-speed-edition", name: "Aston Martin DB4GT High-Speed Edition", brand: "Aston Martin", year: 2025, series: "Mainline · HW Dream Garage", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-dreamgarage-68-corvette-gas-monkey-garage", name: "'68 Corvette - Gas Monkey Garage", brand: "Chevrolet", year: 2025, series: "Mainline · HW Dream Garage", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-screentime-nissan-skyline-gt-r-bnr32", name: "Nissan Skyline GT-R (BNR32)", brand: "Nissan", year: 2025, series: "Mainline · HW Screen Time", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-screentime-kitt", name: "K.I.T.T.", brand: "Pontiac", year: 2025, series: "Mainline · HW Screen Time", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-screentime-chevy-el-camino", name: "Chevy El Camino", brand: "Chevrolet", year: 2025, series: "Mainline · HW Screen Time", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-ev-tesla-model-s-plaid", name: "Tesla Model S Plaid", brand: "Tesla", year: 2025, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-ev-fiat-500e", name: "Fiat 500e", brand: "Fiat", year: 2025, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-ev-cupra-e-racer", name: "Cupra e-Racer", brand: "Cupra", year: 2025, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-ev-silverado-ev-rst", name: "Silverado EV RST", brand: "Chevrolet", year: 2025, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-ev-chevy-super-volt", name: "Chevy Super Volt", brand: "Chevrolet", year: 2025, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-ev-custom-kia-ev6", name: "Custom Kia EV6", brand: "Kia", year: 2025, series: "Mainline · HW EV", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-factoryfresh-morgan-super-3", name: "Morgan Super 3", brand: "Morgan", year: 2025, series: "Mainline · Factory Fresh", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth25-quattro", name: "'87 Audi quattro", brand: "Audi", year: 2025, series: "Mainline · Factory Fresh", type: "STH", color: "Spectraflame blanco", hex: "#e8ecef", toy: "JBC35", kase: "A", upc: "", retail: 4990, min: 60000, max: 95000, usd: [60, 95], diff: 5, notes: "STH oficial del case A — Factory Fresh 2/5." },
+  { id: "reg25-factoryfresh-proton-saga", name: "Proton Saga", brand: "Proton", year: 2025, series: "Mainline · Factory Fresh", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-factoryfresh-gordon-murray-automotive-t-33", name: "Gordon Murray Automotive T.33", brand: "Gordon Murray Automotive", year: 2025, series: "Mainline · Factory Fresh", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-factoryfresh-ferrari-sf90-stradale", name: "Ferrari SF90 Stradale", brand: "Ferrari", year: 2025, series: "Mainline · Factory Fresh", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-dirt-humvee", name: "Humvee", brand: "AM General", year: 2025, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dirt-70-dodge-power-wagon", name: "'70 Dodge Power Wagon", brand: "Dodge", year: 2025, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dirt-chevy-blazer-4x4", name: "Chevy Blazer 4×4", brand: "Chevrolet", year: 2025, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dirt-75-chevy-blazer-custom", name: "'75 Chevy Blazer Custom", brand: "Chevrolet", year: 2025, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth25-gladiator", name: "'20 Jeep Gladiator", brand: "Jeep", year: 2025, series: "Mainline · Dirt", type: "STH", color: "Spectraflame naranjo", hex: "#ff7518", toy: "JBC40", kase: "F", upc: "", retail: 4990, min: 50000, max: 80000, usd: [50, 80], diff: 5, notes: "STH oficial del case F — Dirt 6/10." },
+  { id: "reg25-dirt-ford-model-a-custom-31", name: "Ford Model A Custom '31", brand: "Ford", year: 2025, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dirt-19-chevy-silverado-trail-boss-lt", name: "'19 Chevy Silverado Trail Boss LT", brand: "Chevrolet", year: 2025, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dirt-17-ford-f-150-raptor", name: "'17 Ford F-150 Raptor", brand: "Ford", year: 2025, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-dirt-15-land-rover-defender-double-cab", name: "'15 Land Rover Defender Double Cab", brand: "Land Rover", year: 2025, series: "Mainline · HW Dirt", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-hottrucks-21-ford-bronco", name: "'21 Ford Bronco", brand: "Ford", year: 2025, series: "Mainline · HW Hot Trucks", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-hottrucks-67-chevy-c10", name: "'67 Chevy C10", brand: "Chevrolet", year: 2025, series: "Mainline · HW Hot Trucks", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-hottrucks-80-el-camino", name: "'80 El Camino", brand: "Chevrolet", year: 2025, series: "Mainline · HW Hot Trucks", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-hottrucks-1988-jeep-wagoneer", name: "1988 Jeep Wagoneer", brand: "Jeep", year: 2025, series: "Mainline · HW Hot Trucks", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth25-sunnytruck", name: "'75 Datsun Sunny Truck B120", brand: "Datsun", year: 2025, series: "Mainline · Hot Trucks", type: "STH", color: "Spectraflame verde", hex: "#00a651", toy: "JBC38", kase: "D", upc: "", retail: 4990, min: 60000, max: 95000, usd: [60, 95], diff: 5, notes: "STH oficial del case D — Hot Trucks 6/10." },
+  { id: "reg25-hottrucks-99-ford-f-150-svt-lightning", name: "'99 Ford F-150 SVT Lightning", brand: "Ford", year: 2025, series: "Mainline · HW Hot Trucks", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-hottrucks-91-gmc-syclone", name: "'91 GMC Syclone", brand: "GMC", year: 2025, series: "Mainline · HW Hot Trucks", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-hottrucks-83-chevy-silverado", name: "'83 Chevy Silverado", brand: "Chevrolet", year: 2025, series: "Mainline · HW Hot Trucks", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-hottrucks-1978-dodge-lil-red-express-truck", name: "1978 Dodge Li'l Red Express Truck", brand: "Dodge", year: 2025, series: "Mainline · HW Hot Trucks", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-rodsquad-custom-cadillac-fleetwood", name: "Custom Cadillac Fleetwood", brand: "Cadillac", year: 2025, series: "Mainline · Rod Squad", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-rodsquad-55-chevy", name: "'55 Chevy", brand: "Chevrolet", year: 2025, series: "Mainline · Rod Squad", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth25-hirohata-merc", name: "Hirohata Merc", brand: "Mercury", year: 2025, series: "Mainline · Rod Squad", type: "STH", color: "Spectraflame rosa", hex: "#e91e63", toy: "JBC36", kase: "B", upc: "", retail: 4990, min: 65000, max: 100000, usd: [65, 100], diff: 5, notes: "STH oficial del case B — Rod Squad 4/10. Pieza de culto del año." },
+  { id: "reg25-rodsquad-58-chevy-impala", name: "'58 Chevy Impala", brand: "Chevrolet", year: 2025, series: "Mainline · Rod Squad", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-rodsquad-custom-53-cadillac", name: "Custom '53 Cadillac", brand: "Cadillac", year: 2025, series: "Mainline · Rod Squad", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-jimports-nissan-skyline-2000gt-r-lbwk", name: "Nissan Skyline 2000GT-R LBWK", brand: "Nissan", year: 2025, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-jimports-mazda-repu", name: "Mazda REPU", brand: "Mazda", year: 2025, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-jimports-subaru-brz", name: "Subaru BRZ", brand: "Subaru", year: 2025, series: "Mainline · HW J-Imports", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-thennow-67-ford-mustang-coupe", name: "'67 Ford Mustang Coupe", brand: "Ford", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-thennow-range-rover-velar", name: "Range Rover Velar", brand: "Land Rover", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-thennow-2018-honda-civic-type-r", name: "2018 Honda Civic Type R", brand: "Honda", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-thennow-96-dodge-viper-gts", name: "'96 Dodge Viper GTS", brand: "Dodge", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-thennow-land-rover-defender-90", name: "Land Rover Defender 90", brand: "Land Rover", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-thennow-2013-srt-viper", name: "2013 SRT Viper", brand: "SRT", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-thennow-ford-mustang-dark-horse", name: "Ford Mustang Dark Horse", brand: "Ford", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-thennow-porsche-911-gt3-rs", name: "Porsche 911 GT3 RS", brand: "Porsche", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Versión regular (no STH) del Porsche 911 GT3 RS STH (HW Exotics). Básico buscado — precio de reventa estimado" },
+  { id: "sth25-civiccustom", name: "'73 Honda Civic Custom", brand: "Honda", year: 2025, series: "Mainline · Then and Now", type: "STH", color: "Spectraflame amarillo", hex: "#f5c518", toy: "JBC46", kase: "M", upc: "", retail: 4990, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "STH oficial del case M — Then and Now 9/10." },
+  { id: "reg25-thennow-porsche-911-turbo-cabriolet", name: "Porsche 911 Turbo Cabriolet", brand: "Porsche", year: 2025, series: "Mainline · Then and Now", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-musclemania-71-dodge-challenger", name: "'71 Dodge Challenger", brand: "Dodge", year: 2025, series: "Mainline · Muscle Mania", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-musclemania-69-mercury-cyclone", name: "'69 Mercury Cyclone", brand: "Mercury", year: 2025, series: "Mainline · Muscle Mania", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-musclemania-67-mustang", name: "'67 Mustang", brand: "Ford", year: 2025, series: "Mainline · Muscle Mania", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-musclemania-69-dodge-coronet-superbee", name: "'69 Dodge Coronet Superbee", brand: "Dodge", year: 2025, series: "Mainline · Muscle Mania", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-musclemania-73-pontiac-firebird", name: "'73 Pontiac Firebird", brand: "Pontiac", year: 2025, series: "Mainline · Muscle Mania", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth25-chargerhellcat", name: "'20 Dodge Charger Hellcat", brand: "Dodge", year: 2025, series: "Mainline · Muscle Mania", type: "STH", color: "Spectraflame morado", hex: "#5e35b1", toy: "JBC47", kase: "N", upc: "", retail: 4990, min: 55000, max: 85000, usd: [55, 85], diff: 5, notes: "STH oficial del case N — Muscle Mania 9/10." },
+  { id: "reg25-musclemania-1985-porsche-959", name: "1985 Porsche 959", brand: "Porsche", year: 2025, series: "Mainline · Muscle Mania", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-compactkings-toyota-gr86-cup", name: "Toyota GR86 Cup", brand: "Toyota", year: 2025, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-compactkings-15-mazda-mx-5-miata", name: "'15 Mazda MX-5 Miata", brand: "Mazda", year: 2025, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-compactkings-76-chevy-chevette", name: "'76 Chevy Chevette", brand: "Chevrolet", year: 2025, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-compactkings-ford-escort", name: "Ford Escort", brand: "Ford", year: 2025, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-compactkings-68-dodge-dart", name: "'68 Dodge Dart", brand: "Dodge", year: 2025, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-compactkings-alfa-romeo-giulia-ti-super", name: "Alfa Romeo Giulia TI Super", brand: "Alfa Romeo", year: 2025, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-compactkings-mazda-rx-3", name: "Mazda RX-3", brand: "Mazda", year: 2025, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "th25-s800racing", name: "Honda S800 Racing", brand: "Honda", year: 2025, series: "Mainline · Compact Kings", type: "TH", color: "Rojo", hex: "#c62828", toy: "JBC30", kase: "L", upc: "", retail: 4990, min: 18000, max: 28000, usd: [16, 25], diff: 4, notes: "TH oficial del case L — Compact Kings 9/10." },
+  { id: "reg25-compactkings-lotus-cortina", name: "Lotus Cortina", brand: "Lotus", year: 2025, series: "Mainline · Compact Kings", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-raceday-porsche-911-gt3", name: "Porsche 911 GT3", brand: "Porsche", year: 2025, series: "Mainline · HW Race Day", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-raceday-jaguar-mk1", name: "Jaguar Mk1", brand: "Jaguar", year: 2025, series: "Mainline · HW Race Day", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-raceday-porsche-904-carrera-gts", name: "Porsche 904 Carrera GTS", brand: "Porsche", year: 2025, series: "Mainline · HW Race Day", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-raceday-2020-koenigsegg-jesko", name: "2020 Koenigsegg Jesko", brand: "Koenigsegg", year: 2025, series: "Mainline · HW Race Day", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-raceday-mclaren-w1", name: "McLaren W1", brand: "McLaren", year: 2025, series: "Mainline · HW Race Day", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-raceday-2018-bentley-continental-gt3", name: "2018 Bentley Continental GT3", brand: "Bentley", year: 2025, series: "Mainline · HW Race Day", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-raceday-68-lotus-type-49", name: "'68 Lotus Type 49", brand: "Lotus", year: 2025, series: "Mainline · HW Race Day", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth25-eb110", name: "'94 Bugatti EB110 SS", brand: "Bugatti", year: 2025, series: "Mainline · Race Day", type: "STH", color: "Spectraflame azul", hex: "#1b5fd9", toy: "JBC45", kase: "L", upc: "", retail: 4990, min: 80000, max: 120000, usd: [80, 110], diff: 5, notes: "STH oficial del case L — Race Day 9/10." },
+  { id: "reg25-raceday-ferrari-365-gtb4-competizione", name: "Ferrari 365 GTB4 Competizione", brand: "Ferrari", year: 2025, series: "Mainline · HW Race Day", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-modified-22-ford-maverick-custom", name: "'22 Ford Maverick Custom", brand: "Ford", year: 2025, series: "Mainline · HW Modified", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-modified-66-buick-riviera", name: "'66 Buick Riviera", brand: "Buick", year: 2025, series: "Mainline · HW Modified", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-modified-ford-gt", name: "Ford GT", brand: "Ford", year: 2025, series: "Mainline · HW Modified", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-modified-renault-espace-f1", name: "Renault Espace F1", brand: "Renault", year: 2025, series: "Mainline · HW Modified", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-artcars-custom-53-chevy", name: "Custom '53 Chevy", brand: "Chevrolet", year: 2025, series: "Mainline · HW Art Cars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-artcars-datsun-240z", name: "Datsun 240Z", brand: "Datsun", year: 2025, series: "Mainline · HW Art Cars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-artcars-dmc-delorean", name: "DMC DeLorean", brand: "DMC", year: 2025, series: "Mainline · HW Art Cars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-artcars-70-plymouth-superbird", name: "'70 Plymouth Superbird", brand: "Plymouth", year: 2025, series: "Mainline · HW Art Cars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-artcars-87-austin-mini-van", name: "'87 Austin Mini Van", brand: "Austin", year: 2025, series: "Mainline · HW Art Cars", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-safarimode-lamborghini-huracan-sterrato", name: "Lamborghini Huracán Sterrato", brand: "Lamborghini", year: 2025, series: "Mainline · Safari Mode", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth25-911rallye", name: "Porsche 911 Rallye", brand: "Porsche", year: 2025, series: "Mainline · Safari Mode", type: "STH", color: "Spectraflame azul", hex: "#1565c0", toy: "JBC41", kase: "G", upc: "", retail: 4990, min: 75000, max: 115000, usd: [75, 110], diff: 5, notes: "STH oficial del case G — Safari Mode 2/5. Porsche = alta liquidez." },
+  { id: "reg25-trackaces-oracle-red-bull-racing", name: "Oracle Red Bull Racing", brand: "Red Bull Racing", year: 2025, series: "Mainline · Track Aces", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-trackaces-williams-racing", name: "Williams Racing", brand: "Williams", year: 2025, series: "Mainline · Track Aces", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-trackaces-mercedes-amg-petronas-f1", name: "Mercedes-AMG Petronas Formula One Team", brand: "Mercedes-AMG", year: 2025, series: "Mainline · Track Aces", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-mustang60-ford-mustang-gtd", name: "Ford Mustang GTD", brand: "Ford", year: 2025, series: "Mainline · Mustang 60th", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-mustang60-2020-ford-mustang-shelby-gt500", name: "2020 Ford Mustang Shelby GT500", brand: "Ford", year: 2025, series: "Mainline · Mustang 60th", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-mustang60-67-shelby-gt500", name: "'67 Shelby GT500", brand: "Shelby", year: 2025, series: "Mainline · Mustang 60th", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth25-funnycar", name: "'71 Mustang Funny Car", brand: "Ford", year: 2025, series: "Mainline · Mustang 60th", type: "STH", color: "Spectraflame rojo", hex: "#b71c1c", toy: "JBC42", kase: "H", upc: "", retail: 4990, min: 55000, max: 90000, usd: [55, 90], diff: 5, notes: "STH oficial del case H — Mustang 60th 4/5." },
+  { id: "reg25-mustang60-custom-18-ford-mustang-gt", name: "Custom '18 Ford Mustang GT", brand: "Ford", year: 2025, series: "Mainline · Mustang 60th", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-wildwidebody-bmw-635-csi", name: "BMW 635 CSi", brand: "BMW", year: 2025, series: "Mainline · HW Wild Widebody", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-wildwidebody-89-mercedes-benz-560-sec-amg", name: "'89 Mercedes-Benz 560 SEC AMG", brand: "Mercedes-Benz", year: 2025, series: "Mainline · HW Wild Widebody", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-wildwidebody-pontiac-aztek-custom", name: "Pontiac Aztek Custom", brand: "Pontiac", year: 2025, series: "Mainline · HW Wild Widebody", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-wildwidebody-jaguar-xjc-v12-coupe", name: "Jaguar XJC V12 Coupe", brand: "Jaguar", year: 2025, series: "Mainline · HW Wild Widebody", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "th25-sportquattro", name: "'84 Audi Sport quattro", brand: "Audi", year: 2025, series: "Mainline · Wild Widebody", type: "TH", color: "Amarillo", hex: "#f5c518", toy: "JBC33", kase: "P", upc: "", retail: 4990, min: 16000, max: 26000, usd: [14, 22], diff: 4, notes: "TH oficial del case P — Wild Widebody 5/5." },
+  { id: "reg25-seventies-90-honda-civic-ef", name: "'90 Honda Civic EF", brand: "Honda", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-94-audi-avant-rs2", name: "'94 Audi Avant RS2", brand: "Audi", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-mercedes-benz-500-e", name: "Mercedes-Benz 500 E", brand: "Mercedes-Benz", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-70-chevy-camaro-rs", name: "'70 Chevy Camaro RS", brand: "Chevrolet", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-bmw-2002", name: "BMW 2002", brand: "BMW", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-71-lamborghini-miura-sv", name: "'71 Lamborghini Miura SV", brand: "Lamborghini", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-92-ford-mustang", name: "'92 Ford Mustang", brand: "Ford", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-nissan-skyline-gt-r-bcnr33", name: "Nissan Skyline GT-R (BCNR33)", brand: "Nissan", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-95-mazda-rx-7-drift-r", name: "'95 Mazda RX-7 Drift R", brand: "Mazda", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Versión regular (no TH) del '95 Mazda RX-7 TH (HW J-Imports). Básico buscado — precio de reventa estimado" },
+  { id: "reg25-seventies-70-dodge-hemi-challenger", name: "'70 Dodge Hemi Challenger", brand: "Dodge", year: 2025, series: "Mainline · '70s vs. '90s", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-reverserake-23-ram-1500", name: "'23 Ram 1500", brand: "Ram", year: 2025, series: "Mainline · HW Reverse Rake", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "sth25-gasser", name: "'62 Corvette Gasser", brand: "Chevrolet", year: 2025, series: "Mainline · Reverse Rake", type: "STH", color: "Spectraflame celeste", hex: "#4fc3f7", toy: "JBC43", kase: "J", upc: "", retail: 4990, min: 65000, max: 100000, usd: [65, 100], diff: 5, notes: "STH oficial del case J — Reverse Rake 4/5." },
+  { id: "reg25-reverserake-honda-civic-custom", name: "Honda Civic Custom", brand: "Honda", year: 2025, series: "Mainline · HW Reverse Rake", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "th25-supervan4", name: "Ford Performance SuperVan 4", brand: "Ford", year: 2025, series: "Mainline · First Response", type: "TH", color: "Blanco", hex: "#f0f2f4", toy: "JBC20", kase: "A", upc: "", retail: 4990, min: 16000, max: 26000, usd: [14, 22], diff: 4, notes: "TH oficial del case A — First Response 1/5." },
+  { id: "reg25-firstresponse-2020-ram-1500-rebel", name: "2020 Ram 1500 Rebel", brand: "Ram", year: 2025, series: "Mainline · HW First Response", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-metro-maserati-shamal", name: "Maserati Shamal", brand: "Maserati", year: 2025, series: "Mainline · HW Metro", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "reg25-exotics-cadillac-project-gtp-hypercar", name: "Cadillac Project GTP Hypercar", brand: "Cadillac", year: 2025, series: "Mainline · HW Exotics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-exotics-peugeot-9x8-hypercar", name: "Peugeot 9X8 Hypercar", brand: "Peugeot", year: 2025, series: "Mainline · HW Exotics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-exotics-gordon-murray-automotive-t-50s", name: "Gordon Murray Automotive T.50S", brand: "Gordon Murray Automotive", year: 2025, series: "Mainline · HW Exotics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 4990, max: 4990, usd: [4, 5], diff: 1, notes: "" },
+  { id: "reg25-exotics-ferrari-f40-competizione", name: "Ferrari F40 Competizione", brand: "Ferrari", year: 2025, series: "Mainline · HW Exotics", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 11000, max: 20000, usd: [10, 17], diff: 4, notes: "Básico buscado — precio de reventa estimado" },
+  { id: "sth25-speedtail", name: "McLaren Speedtail", brand: "McLaren", year: 2025, series: "Mainline · Exotics", type: "STH", color: "Spectraflame naranjo", hex: "#ff7518", toy: "JBC44", kase: "K", upc: "", retail: 4990, min: 70000, max: 110000, usd: [70, 105], diff: 5, notes: "STH oficial del case K — Exotics 5/5." },
+  { id: "th25-tr6", name: "Triumph TR6", brand: "Triumph", year: 2025, series: "Mainline · Track Champs", type: "TH", color: "Rojo", hex: "#c62828", toy: "JBC34", kase: "Q", upc: "", retail: 4990, min: 15000, max: 24000, usd: [13, 20], diff: 3, notes: "TH oficial del case Q — Track Champs 5/5." },
+  { id: "reg25-celebrationracers-74-brazilian-dodge-charger", name: "'74 Brazilian Dodge Charger", brand: "Dodge", year: 2025, series: "Mainline · HW Celebration Racers", type: "REG", color: "—", hex: "#8b98ab", toy: "—", kase: "—", upc: "", retail: 4990, min: 9000, max: 17000, usd: [8, 14], diff: 3, notes: "Básico buscado — precio de reventa estimado" }
 ];
 DB.forEach((m) => { m.signs = signsFor(m.type); m.factor = Math.round(m.min / m.retail) + "x–" + Math.round(m.max / m.retail) + "x"; });
 
@@ -894,8 +1176,8 @@ const CALENDAR = [
   { m: "ENE", d: "2026", t: "Case A–B 2026 (EE.UU.)", s: "Primeros TH/STH del año. En Chile se ven ~marzo–abril." },
   { m: "MAR", d: "2026", t: "Case A–B llegan a Chile", s: "Revisa Líder y Jumbo: primera ola de TH 2026 en ganchos." },
   { m: "ABR", d: "2026", t: "Case C–D 2026 (EE.UU.)", s: "Nuevos STH confirmados en redes de coleccionistas." },
-  { m: "JUN", d: "2026", t: "Case C–D llegan a Chile", s: "Ojo con el Skyline R34 y Countach STH: desaparecen el mismo día." },
-  { m: "JUL", d: "2026", t: "Case E–F 2026 (EE.UU.)", s: "Mitad de año: Mattel suele esconder los mejores TH aquí." },
+  { m: "JUN", d: "2026", t: "Case C–D llegan a Chile", s: "Ojo: STH C = Ferrari F40 Competizione y STH D = '64 Impala. Desaparecen el mismo día." },
+  { m: "JUL", d: "2026", t: "Case E–F 2026 (EE.UU.)", s: "STH E = Sierra Cosworth y STH F = Honda Civic Custom. TH E = Cone Shaker." },
   { m: "SEP", d: "2026", t: "Case E–F llegan a Chile", s: "Temporada alta: más reposición por ventas de primavera." },
   { m: "OCT", d: "2026", t: "Case G–H + exclusivos navideños", s: "Llegan series premium de fin de año al retail chileno." },
   { m: "DIC", d: "2026", t: "Navidad: reposición masiva", s: "El retail repone fuerte; también hay más reventa en Marketplace." },
@@ -914,7 +1196,6 @@ function showSection(id) {
   $$(".section").forEach((s) => s.classList.toggle("active", s.id === id));
   $$("#tabbar button").forEach((b) => b.classList.toggle("active", b.dataset.sec === id));
   window.scrollTo({ top: 0, behavior: "instant" });
-  if (id !== "sec-scanner") stopCamera();
 }
 
 /* ---------- Tema claro/oscuro ---------- */
@@ -969,7 +1250,7 @@ function openAddModel() {
       <div class="field"><label>Color</label><input id="amColor" placeholder="Rojo"></div>
       <div class="field"><label>Color para la ilustración</label><input type="color" id="amHex" value="#c62828" style="height:48px;padding:4px"></div>
       <div class="field"><label>Toy #</label><input id="amToy" placeholder="Ej: JBC21"></div>
-      <div class="field"><label>UPC (código de barras)</label><input type="number" id="amUpc" inputmode="numeric" placeholder="194735…"></div>
+      <div class="field"><label>Foto (ruta img/…, opcional)</label><input id="amImg" placeholder="Ej: img/th25-quattro.jpg"></div>
       <div class="field"><label>Precio retail CLP *</label><input type="number" id="amRetail" inputmode="numeric" placeholder="4990"></div>
       <div class="field"><label>Reventa mín CLP *</label><input type="number" id="amMin" inputmode="numeric" placeholder="8000"></div>
       <div class="field"><label>Reventa máx CLP</label><input type="number" id="amMax" inputmode="numeric" placeholder="15000"></div>
@@ -995,12 +1276,13 @@ function saveCustomModel() {
     hex: $("#amHex").value,
     toy: $("#amToy").value.trim() || "—",
     kase: $("#amKase").value.trim() || "—",
-    upc: $("#amUpc").value.replace(/\D/g, "") || ("C" + Date.now().toString().slice(-10)),
+    upc: "",
     retail, min,
     max: +$("#amMax").value || min,
     usd: [+$("#amUsdMin").value || 0, +$("#amUsdMax").value || 0],
     diff: Math.min(5, Math.max(1, +$("#amDiff").value || 2)),
     notes: $("#amNotes").value.trim(),
+    img: $("#amImg").value.trim() || undefined,
     custom: true
   };
   m.signs = signsFor(m.type);
@@ -1032,73 +1314,33 @@ function refreshModelUI() {
 /* ================================================================
    SECCIÓN 1: SCANNER
 ================================================================ */
-let camStream = null, detHandle = null, lastScan = 0;
-
-async function startCamera() {
-  const status = $("#scanStatus");
-  if (!navigator.mediaDevices?.getUserMedia) {
-    status.textContent = "❌ Cámara no disponible. Usa HTTPS/localhost o la búsqueda manual.";
+/* --- Búsqueda viva por nombre / Toy # / SKU --- */
+function searchModels(q) {
+  q = q.trim().toLowerCase();
+  if (q.length < 2) return null;
+  return allModels().filter((m) =>
+    m.name.toLowerCase().includes(q) ||
+    m.id.toLowerCase().includes(q) ||
+    (m.toy && m.toy !== "—" && m.toy.toLowerCase().includes(q)) ||
+    m.brand.toLowerCase().includes(q) ||
+    m.series.toLowerCase().includes(q)
+  ).slice(0, 8);
+}
+function renderScanLive() {
+  const box = $("#scanLive");
+  const hits = searchModels($("#scanManual").value);
+  if (hits === null) { box.innerHTML = ""; return; }
+  if (!hits.length) {
+    box.innerHTML = `<div class="scan-none">No encontrado — verifícalo con el asistente.<br><button class="btn btn-blue btn-sm" style="margin-top:8px" onclick="openWizard()">🧙 ¿Es TH o STH?</button></div>`;
     return;
   }
-  try {
-    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-    $("#camVideo").srcObject = camStream;
-    await $("#camVideo").play();
-    $("#cameraBox").classList.add("on");
-    $("#btnCamStart").classList.add("hidden");
-    $("#btnCamStop").classList.remove("hidden");
-    if ("BarcodeDetector" in window) {
-      status.textContent = "🎯 Apunta al código de barras…";
-      const detector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39"] });
-      const loop = async () => {
-        if (!camStream) return;
-        try {
-          const codes = await detector.detect($("#camVideo"));
-          if (codes.length && Date.now() - lastScan > 2500) {
-            lastScan = Date.now();
-            lookupCode(codes[0].rawValue);
-          }
-        } catch { /* frame sin código */ }
-        detHandle = requestAnimationFrame(loop);
-      };
-      loop();
-    } else {
-      status.textContent = "⚠️ Tu navegador no soporta lectura automática de códigos. Usa la búsqueda manual de abajo.";
-    }
-  } catch (err) {
-    status.textContent = "❌ No se pudo abrir la cámara: " + (err.name === "NotAllowedError" ? "permiso denegado" : err.message);
-  }
+  box.innerHTML = hits.map((m) => `
+    <button class="scan-hit" onclick="renderResult(allModels().find(x=>x.id==='${m.id}'))">
+      <span class="scan-thumb">${photoHTML(m, "sl" + m.id)}</span>
+      <span class="sh-info"><b>${esc(m.name)}</b><span>${m.year} · ${TYPE_LABEL[m.type]} · Toy # ${esc(m.toy)} · Case ${esc(m.kase)}</span></span>
+    </button>`).join("");
 }
-function stopCamera() {
-  if (detHandle) cancelAnimationFrame(detHandle);
-  detHandle = null;
-  if (camStream) { camStream.getTracks().forEach((t) => t.stop()); camStream = null; }
-  $("#cameraBox").classList.remove("on");
-  $("#btnCamStart")?.classList.remove("hidden");
-  $("#btnCamStop")?.classList.add("hidden");
-}
-$("#btnCamStart").addEventListener("click", startCamera);
-$("#btnCamStop").addEventListener("click", stopCamera);
-
-function lookupCode(code) {
-  const clean = String(code).replace(/\D/g, "");
-  const hit = allModels().find((m) => m.upc === clean);
-  $("#scanStatus").textContent = "Código leído: " + clean;
-  if (hit) renderResult(hit);
-  else renderNotFound(clean);
-  navigator.vibrate?.(200);
-}
-
-$("#scanManual").addEventListener("input", (e) => {
-  const q = e.target.value.trim().toLowerCase();
-  if (q.length < 3) return;
-  const hit = allModels().find((m) =>
-    m.upc === q.replace(/\D/g, "") && q.replace(/\D/g, "").length > 6 ||
-    m.toy.toLowerCase() === q ||
-    m.name.toLowerCase().includes(q)
-  );
-  if (hit) renderResult(hit);
-});
+$("#scanManual").addEventListener("input", renderScanLive);
 
 function renderResult(m) {
   const cls = m.type === "TH" ? "TH" : m.type === "STH" ? "STH" : "REG";
@@ -1107,9 +1349,9 @@ function renderResult(m) {
     <div class="result-card">
       <div class="result-banner ${cls}">${banner}</div>
       <div class="result-body">
-        <div class="result-car">${carSVG(m.hex, m.type, m.id)}</div>
+        <div class="result-car">${photoHTML(m, "rs" + m.id)}</div>
         <h3 style="text-align:center">${esc(m.name)}</h3>
-        <p class="muted small" style="text-align:center;margin:4px 0">${m.year} · ${esc(m.series)} · Toy # ${m.toy} · Case ${m.kase}</p>
+        <p class="muted small" style="text-align:center;margin:4px 0">${m.year} · ${esc(m.series)} · Toy # <b>${esc(m.toy)}</b> · Case ${esc(m.kase)}</p>
         <p class="kbd-note">Ilustración referencial, no foto real del producto.</p>
         <div class="price-grid">
           <div class="price-cell"><span>Retail Chile</span><b>${fmtCLP(m.retail)}</b></div>
@@ -1127,16 +1369,6 @@ function renderResult(m) {
       </div>
     </div>`;
   $("#scanResult").scrollIntoView({ behavior: "smooth", block: "start" });
-}
-function renderNotFound(code) {
-  $("#scanResult").innerHTML = `
-    <div class="result-card">
-      <div class="result-banner NF">Código ${esc(code)} no está en la base de datos</div>
-      <div class="result-body">
-        <p class="small">Puede ser un regular o un modelo aún no cargado. Antes de soltarlo, verifícalo con el asistente:</p>
-        <button class="btn btn-blue btn-block" style="margin-top:12px" onclick="openWizard()">🧙 Abrir asistente ¿Es TH o STH?</button>
-      </div>
-    </div>`;
 }
 
 /* --- Comparación visual por foto --- */
@@ -1226,7 +1458,7 @@ function renderDB() {
   $("#dbCount").textContent = `${list.length} modelos`;
   $("#dbGrid").innerHTML = list.map((m) => `
     <div class="db-card" onclick="openModel('${m.id}')">
-      <div class="db-thumb">${carSVG(m.hex, m.type, "db" + m.id)}</div>
+      <div class="db-thumb">${photoHTML(m, "db" + m.id)}</div>
       <div class="db-info">
         <span class="badge b-${m.type === "REDED" ? "REDED" : m.type === "ID" ? "CHASE" : m.type}">${TYPE_LABEL[m.type]}</span>${m.custom ? ` <span class="badge b-REG">✍️ Tuyo</span>` : ""}
         <h4>${esc(m.name)}</h4>
@@ -1241,7 +1473,7 @@ function openModel(id) {
   if (!m) return;
   const inList = checklist.some((c) => c.id === id);
   openModal(`
-    <div style="text-align:center;padding:6px 0 10px">${carSVG(m.hex, m.type, "md" + m.id)}</div>
+    <div style="text-align:center;padding:6px 0 10px">${photoHTML(m, "md" + m.id)}</div>
     <div style="text-align:center;margin-bottom:8px"><span class="badge b-${m.type === "REDED" ? "REDED" : m.type === "ID" ? "CHASE" : m.type}">${TYPE_LABEL[m.type]}</span></div>
     <h3 style="text-align:center">${esc(m.name)}</h3>
     <p class="muted small" style="text-align:center">${esc(m.brand)} · ${m.year} · ${esc(m.series)}</p>
@@ -1254,7 +1486,7 @@ function openModel(id) {
       <div class="price-cell"><span>🌎 Internacional</span><b>${fmtUSD(m.usd[0])}–${fmtUSD(m.usd[1])}</b></div>
       <div class="price-cell"><span>Dificultad</span><b>${stars(m.diff)}</b></div>
     </div>
-    <p class="small muted" style="margin-top:6px">🎨 Color: ${esc(m.color)} · Toy # <b>${m.toy}</b> · Case ${m.kase} · UPC ${m.upc}</p>
+    <p class="small muted" style="margin-top:6px">🎨 Color: ${esc(m.color)} · Toy # <b>${esc(m.toy)}</b> · Case ${esc(m.kase)}</p>
     <h4 style="margin:12px 0 2px">Señales de identificación</h4>
     <ul class="sign-list">${m.signs.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
     ${m.notes ? `<p class="small" style="margin-top:8px">📝 ${esc(m.notes)}</p>` : ""}
@@ -1568,7 +1800,6 @@ function shareHunt(id) {
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
-document.addEventListener("visibilitychange", () => { if (document.hidden) stopCamera(); });
 
 renderDB();
 renderAlerts();
