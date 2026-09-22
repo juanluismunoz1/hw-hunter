@@ -320,6 +320,14 @@ body.light .scan-hero{background:linear-gradient(135deg,#fff1e6,#eef2fa)}
 .hidden{display:none!important}
 .divider{height:1px;background:var(--border);margin:16px 0}
 .kbd-note{font-size:11.5px;color:var(--faint);margin-top:8px;text-align:center}
+
+/* ============ VERIFICACIÓN EN TIENDA (campos técnicos) ============ */
+.tech-line{margin-top:6px;color:var(--muted)}
+.mold-link{color:var(--accent2-lt);font-weight:700;text-decoration:none}
+.verify-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.verify-row{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 9px}
+.verify-row span{display:block;font-size:11px;color:var(--muted)}
+.verify-row b{font-size:13px}
 </style>
 </head>
 <body>
@@ -772,6 +780,35 @@ function photoHTML(m, svgId) {
   return carSVG(m.hex, m.type, svgId);
 }
 
+/* Línea técnica: índice /250, posición en serie y molde (enlace buscable) */
+function techHTML(m) {
+  const parts = [];
+  if (m.idx) parts.push("Índice " + m.idx + "/250");
+  if (m.pos) parts.push(esc(m.series.replace("Mainline · ", "")) + " " + esc(m.pos));
+  if (m.mold) parts.push('Molde <a href="#" class="mold-link" onclick="searchMold(\'' + esc(m.mold) + '\');return false">' + esc(m.mold) + "</a>");
+  return parts.length ? `<p class="small tech-line">📋 ${parts.join(" · ")}</p>` : "";
+}
+/* Tabla de verificación física en tienda (colores, base, ruedas) */
+function verifyHTML(m) {
+  const rows = [];
+  if (m.bodyColor) rows.push(["Carrocería", m.bodyColor]);
+  if (m.intColor) rows.push(["Interior", m.intColor]);
+  if (m.baseMat) rows.push(["Base", m.baseMat + (/metal/i.test(m.baseMat) ? " → base de metal (seña STH)" : "")]);
+  if (m.wheels) rows.push(["Ruedas", m.wheels + (/real\s?rider/i.test(m.wheels) ? " → Real Riders (seña STH)" : "")]);
+  if (!rows.length) return "";
+  return `<h4 style="margin:12px 0 4px">🔍 Verifícalo en tienda</h4><div class="verify-grid">` +
+    rows.map(([k, v]) => `<div class="verify-row"><span>${k}</span><b>${esc(v)}</b></div>`).join("") + `</div>`;
+}
+/* Busca un molde desde el enlace: cierra el modal, va al scanner y filtra */
+function searchMold(code) {
+  closeModal();
+  showSection("sec-scanner");
+  const inp = $("#scanManual");
+  inp.value = code;
+  renderScanLive();
+  setTimeout(() => inp.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+}
+
 function signsFor(type, extra) {
   const base = {
     TH: ["Llama 🔥 en la carrocería o impresa detrás del auto en el blister",
@@ -800,7 +837,9 @@ const TYPE_LABEL = { TH: "🔥 TH", STH: "💎 STH", REG: "⚪ Regular", ZAMAC: 
 
 /* ---------- BASE DE DATOS (demo, 2023–2026) ----------
    Campos: name, brand, year, series, type, color, hex, toy (Toy #),
-   kase (case), upc (demo), retail CLP, min/max reventa CLP, usd [min,max], diff 1-5, notes */
+   kase (case), upc (demo), retail CLP, min/max reventa CLP, usd [min,max], diff 1-5, notes
+   Opcionales (verificación en tienda): idx (índice /250), pos (posición en
+   serie), bodyColor, intColor, baseMat, wheels, mold — todos opcionales. */
 const DB = [
   /* ===== 2026 ===== */
   /* — TH 2026 oficiales (hwtreasure.com) — */
@@ -1444,6 +1483,8 @@ function openAddModel() {
       <div class="field"><label>Color</label><input id="amColor" placeholder="Rojo"></div>
       <div class="field"><label>Color para la ilustración</label><input type="color" id="amHex" value="#c62828" style="height:48px;padding:4px"></div>
       <div class="field"><label>Toy #</label><input id="amToy" placeholder="Ej: JBC21"></div>
+      <div class="field"><label>Índice /250 (opcional)</label><input type="number" id="amIdx" inputmode="numeric" placeholder="Ej: 9"></div>
+      <div class="field"><label>Molde (opcional)</label><input id="amMold" placeholder="Ej: GJR71"></div>
       <div class="field"><label>Foto (ruta img/…, opcional)</label><input id="amImg" placeholder="Ej: img/th25-quattro.jpg"></div>
       <div class="field"><label>Precio retail CLP *</label><input type="number" id="amRetail" inputmode="numeric" placeholder="4990"></div>
       <div class="field"><label>Reventa mín CLP *</label><input type="number" id="amMin" inputmode="numeric" placeholder="8000"></div>
@@ -1469,6 +1510,8 @@ function saveCustomModel() {
     color: $("#amColor").value.trim() || "—",
     hex: $("#amHex").value,
     toy: $("#amToy").value.trim() || "—",
+    idx: parseInt($("#amIdx").value) || undefined,
+    mold: $("#amMold").value.trim() || undefined,
     kase: $("#amKase").value.trim() || "—",
     upc: "",
     retail, min,
@@ -1517,7 +1560,8 @@ function searchModels(q) {
     m.id.toLowerCase().includes(q) ||
     (m.toy && m.toy !== "—" && m.toy.toLowerCase().includes(q)) ||
     m.brand.toLowerCase().includes(q) ||
-    m.series.toLowerCase().includes(q)
+    m.series.toLowerCase().includes(q) ||
+    (m.mold && m.mold.toLowerCase().includes(q))
   ).slice(0, 8);
 }
 function renderScanLive() {
@@ -1546,12 +1590,14 @@ function renderResult(m) {
         <div class="result-car">${photoHTML(m, "rs" + m.id)}</div>
         <h3 style="text-align:center">${esc(m.name)}</h3>
         <p class="muted small" style="text-align:center;margin:4px 0">${m.year} · ${esc(m.series)} · Toy # <b>${esc(m.toy)}</b> · Case ${esc(m.kase)}</p>
+        ${techHTML(m)}
         <p class="kbd-note">Ilustración referencial, no foto real del producto.</p>
         <div class="price-grid">
           <div class="price-cell"><span>Retail Chile</span><b>${fmtCLP(m.retail)}</b></div>
           <div class="price-cell"><span>Reventa Chile</span><b>${fmtCLP(m.min)}–${fmtCLP(m.max)}</b></div>
           <div class="price-cell gain"><span>Margen</span><b>${m.factor}</b></div>
         </div>
+        ${verifyHTML(m)}
         <p class="small muted">🌎 Reventa internacional (eBay/ML): <b>${fmtUSD(m.usd[0])}–${fmtUSD(m.usd[1])}</b> · Dificultad: ${stars(m.diff)}</p>
         <h4 style="margin:12px 0 2px">Señales de identificación</h4>
         <ul class="sign-list">${m.signs.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
@@ -1656,7 +1702,7 @@ function renderDB() {
       <div class="db-info">
         <span class="badge b-${m.type === "REDED" ? "REDED" : m.type === "ID" ? "CHASE" : m.type}">${TYPE_LABEL[m.type]}</span>${m.custom ? ` <span class="badge b-REG">✍️ Tuyo</span>` : ""}
         <h4>${esc(m.name)}</h4>
-        <div class="meta">${m.year} · Case ${m.kase}</div>
+        <div class="meta">${m.year}${m.idx ? " · " + m.idx + "/250" : ""} · Case ${m.kase}</div>
         <div class="price">${fmtCLP(m.min)} – ${fmtCLP(m.max)}</div>
       </div>
     </div>`).join("") || `<p class="muted">Sin resultados para ese filtro.</p>`;
@@ -1681,6 +1727,8 @@ function openModel(id) {
       <div class="price-cell"><span>Dificultad</span><b>${stars(m.diff)}</b></div>
     </div>
     <p class="small muted" style="margin-top:6px">🎨 Color: ${esc(m.color)} · Toy # <b>${esc(m.toy)}</b> · Case ${esc(m.kase)}</p>
+    ${techHTML(m)}
+    ${verifyHTML(m)}
     <h4 style="margin:12px 0 2px">Señales de identificación</h4>
     <ul class="sign-list">${m.signs.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
     ${m.notes ? `<p class="small" style="margin-top:8px">📝 ${esc(m.notes)}</p>` : ""}
